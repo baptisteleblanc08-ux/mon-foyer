@@ -1,0 +1,161 @@
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mon Foyer - Module</title>
+
+<style>
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #f1f5f9;
+    color: #172b4d;
+  }
+
+  header {
+    background: #142b49;
+    color: white;
+    padding: 22px 5%;
+  }
+
+  header a {
+    color: #dbeafe;
+    text-decoration: none;
+  }
+
+  main {
+    max-width: 1000px;
+    margin: 35px auto;
+    padding: 20px;
+  }
+
+  .carte {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    padding: 30px;
+  }
+
+  .icone {
+    font-size: 48px;
+  }
+
+  h1 { margin-bottom: 8px; }
+
+  p {
+    line-height: 1.6;
+    color: #64748b;
+  }
+
+  .statut {
+    display: inline-block;
+    background: #e2e8f0;
+    padding: 8px 14px;
+    border-radius: 20px;
+    margin-top: 14px;
+    font-size: 13px;
+  }
+
+  .retour {
+    display: inline-block;
+    margin-top: 24px;
+    background: #2563eb;
+    color: white;
+    padding: 12px 20px;
+    border-radius: 10px;
+    text-decoration: none;
+  }
+</style>
+</head>
+
+<body>
+
+<header>
+  <a href="index.html">← Retour à Mon Foyer</a>
+  <h1 id="titre-header">Mon Foyer</h1>
+</header>
+
+<main>
+  <section class="carte">
+    <div class="icone" id="icone"></div>
+
+    <h1 id="titre"></h1>
+
+    <p id="description"></p>
+
+    <span class="statut">Module à développer</span>
+
+    <p>
+      Cette rubrique est prête à accueillir
+      ses prochaines fonctionnalités.
+    </p>
+
+    <a class="retour" href="index.html">
+      Retour au tableau de bord
+    </a>
+  </section>
+</main>
+
+<script>
+const modules = {
+  jardin: {
+    nom: "Mon Carnet Jardin",
+    icone: "🌱",
+    description:
+      "Gestion du potager, planification des cultures, plantations et récoltes."
+  },
+
+  energie: {
+    nom: "Mon Énergie",
+    icone: "⚡",
+    description:
+      "Suivi de l'électricité, du chauffage, du fioul, du bois et de la recharge du véhicule."
+  },
+
+  eau: {
+    nom: "Mon Eau",
+    icone: "💧",
+    description:
+      "Gestion de la consommation d'eau, des réserves et de l'arrosage."
+  },
+
+  budget: {
+    nom: "Mon Budget",
+    icone: "💶",
+    description:
+      "Suivi des dépenses, des budgets, des économies et des prévisions."
+  },
+
+  maison: {
+    nom: "Ma Maison",
+    icone: "🏠",
+    description:
+      "Suivi des équipements, des entretiens, des travaux et des documents de la maison."
+  }
+};
+
+const params = new URLSearchParams(window.location.search);
+const moduleId = params.get("m");
+
+const module = modules[moduleId];
+
+if (module) {
+  document.title = module.nom + " - Mon Foyer";
+
+  document.getElementById("titre-header").textContent = module.nom;
+  document.getElementById("titre").textContent = module.nom;
+  document.getElementById("icone").textContent = module.icone;
+  document.getElementById("description").textContent =
+    module.description;
+} else {
+  document.getElementById("titre").textContent =
+    "Module introuvable";
+}
+</script>
+
+</body>
+</html>
