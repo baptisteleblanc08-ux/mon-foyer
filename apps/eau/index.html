@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0c536c">
+<meta name="robots" content="noindex,nofollow">
+<title>Mon Eau — Mon Foyer</title>
+<style>
+:root{font-family:system-ui,-apple-system,Segoe UI,Arial,sans-serif;color:#163443;background:#f3f8fa}
+*{box-sizing:border-box}body{margin:0}a{color:inherit}header{background:#0c536c;color:white;padding:18px 22px}
+header .bar{max-width:1050px;margin:auto;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+header a{color:#e5f8ff}h1{font-size:1.55rem;margin:0}h2{font-size:1.1rem;margin:0 0 14px}
+main{max-width:1050px;margin:auto;padding:20px}.muted,.hint{color:#577482}.muted{font-size:.91rem}.hint{font-size:.83rem;line-height:1.5}
+.layout{display:grid;grid-template-columns:1fr 1fr;gap:16px}.panel{background:white;border:1px solid #d7e7ed;border-radius:15px;padding:19px;margin-bottom:16px;box-shadow:0 2px 9px #153d4a08}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.kpi{background:#fff;border:1px solid #d7e7ed;border-radius:13px;padding:16px}.kpi .value{font-size:1.6rem;font-weight:750;margin:5px 0}.kpi .name{font-size:.85rem;color:#577482}
+label{display:block;font-size:.92rem;font-weight:600;margin:10px 0 5px}input{width:100%;border-radius:9px;padding:11px;border:1px solid #afc7d1;font:inherit;color:inherit;background:white}input:focus{outline:2px solid #1b839e}
+button{cursor:pointer;border:0;background:#0c617d;color:white;font:inherit;font-weight:650;padding:10px 14px;border-radius:9px}button:hover{background:#08465b}
+.secondary{background:#e7f2f6;color:#135267}.secondary:hover{background:#d2e6ee}.danger{background:#fff1ef;color:#a33328}.danger:hover{background:#ffe1dc}
+.actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}.error{color:#ad3429;font-weight:600}.success{color:#176443;font-weight:600}
+table{border-collapse:collapse;width:100%;font-size:.9rem}th,td{text-align:left;padding:10px 7px;border-bottom:1px solid #e5eef1}th{color:#4d6977;font-weight:650}td:last-child,th:last-child{text-align:right}tbody tr:hover{background:#f5fafc}.scroller{overflow-x:auto}
+.chart{height:210px;display:flex;align-items:end;gap:12px;border-bottom:1px solid #c7dade;padding:15px 5px 0}.barwrap{flex:1;min-width:30px;display:flex;flex-direction:column;align-items:center;justify-content:end;height:100%;gap:5px}.barrect{width:min(55px,80%);background:#49a7be;border-radius:6px 6px 0 0;min-height:2px}.barlabel{font-size:.76rem;color:#567280;white-space:nowrap}.barvalue{font-size:.73rem;color:#234d61}.full{grid-column:1/-1}
+@media(max-width:750px){.layout{grid-template-columns:1fr}.kpis{grid-template-columns:repeat(2,1fr)}main{padding:13px}.panel{padding:15px}}@media(max-width:390px){.kpi .value{font-size:1.3rem}}
+</style>
+</head>
+<body>
+<header><div class="bar"><div><h1>Mon Eau</h1><div>Suivi des consommations · Mon Foyer</div></div><a href="../../index.html">← Retour à Mon Foyer</a></div></header>
+<main>
+<p class="muted">Compteur classique · Relevés manuels. Les consommations sont calculées entre deux index successifs.</p>
+<section class="kpis" aria-label="Indicateurs">
+<div class="kpi"><div class="name">Dernier index</div><div class="value" id="lastIndex">—</div><div class="hint" id="lastDate">Aucun relevé</div></div>
+<div class="kpi"><div class="name">Dernière période</div><div class="value" id="lastUsage">—</div><div class="hint" id="lastPeriod">Deux relevés nécessaires</div></div>
+<div class="kpi"><div class="name">Moyenne journalière</div><div class="value" id="daily">—</div><div class="hint">Sur la dernière période</div></div>
+<div class="kpi"><div class="name">Coût estimé période</div><div class="value" id="cost">—</div><div class="hint">Hors abonnement</div></div>
+</section>
+<div class="layout" style="margin-top:16px">
+<section class="panel"><h2>Ajouter un relevé</h2><form id="readingForm"><label for="date">Date du relevé</label><input id="date" type="date" required>
+<label for="index">Index du compteur (m³)</label><input id="index" type="number" min="0" step="0.001" placeholder="Ex. 1254.320" required>
+<p class="hint">Saisir les chiffres noirs en m³. Ne pas inclure les chiffres rouges (litres) sauf conversion en décimales.</p>
+<button type="submit">Enregistrer le relevé</button><p role="status" id="message"></p></form></section>
+<section class="panel"><h2>Paramètres de calcul</h2><label for="price">Prix variable du m³ (€ TTC)</label><input id="price" type="number" min="0" step="0.0001" inputmode="decimal" placeholder="Ex. 4.50">
+<p class="hint">Prix variable total eau + assainissement + taxes variables figurant sur la facture. Abonnement fixe exclu.</p><div class="actions"><button id="savePrice" type="button">Enregistrer le tarif</button></div></section>
+<section class="panel full"><h2>Évolution des consommations</h2><p class="hint">Volume entre deux relevés consécutifs (périodes réelles, pas nécessairement des mois complets).</p><div id="chart" class="chart" role="img" aria-label="Histogramme des consommations"></div><p id="chartEmpty" class="muted">Ajoutez au moins deux relevés.</p></section>
+<section class="panel full"><h2>Historique des relevés</h2><div class="scroller"><table><thead><tr><th>Date</th><th>Index (m³)</th><th>Consommation depuis le précédent</th><th>Action</th></tr></thead><tbody id="history"></tbody></table></div><p id="empty" class="muted">Aucun relevé enregistré.</p>
+<div class="actions"><button class="secondary" id="export" type="button">Exporter une sauvegarde JSON</button><button class="secondary" id="importBtn" type="button">Importer une sauvegarde</button><input id="importFile" type="file" accept="application/json,.json" hidden></div></section>
+</div>
+<p class="hint">Confidentialité : les données sont conservées uniquement dans le navigateur de cet appareil. La synchronisation OneDrive et la récupération Culligan via Home Assistant ne sont pas encore activées. Conservez des sauvegardes JSON régulières.</p>
+</main>
+<script>
+'use strict';
+const KEY='mon-eau-v1';
+const $=id=>document.getElementById(id);
+const nfmt=(n,max=2)=>Number(n).toLocaleString('fr-FR',{maximumFractionDigits:max});
+const money=n=>Number(n).toLocaleString('fr-FR',{style:'currency',currency:'EUR'});
+const formatDate=s=>new Date(s+'T12:00:00').toLocaleDateString('fr-FR');
+const dayDiff=(a,b)=>Math.round((Date.parse(b+'T12:00:00Z')-Date.parse(a+'T12:00:00Z'))/86400000);
+function fresh(){return {price:null,readings:[]}}
+function sanitize(d){
+ if(!d||!Array.isArray(d.readings))throw Error('Format incorrect');
+ const price=d.price===null||d.price===''||d.price===undefined?null:Number(d.price);
+ if(price!==null&&(!Number.isFinite(price)||price<0))throw Error('Tarif incorrect');
+ const readings=d.readings.map(r=>({id:String(r.id),date:String(r.date),index:Number(r.index)}));
+ for(const r of readings){
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(r.date)||!Number.isFinite(Date.parse(r.date+'T12:00:00Z'))||new Date(r.date+'T12:00:00Z').toISOString().slice(0,10)!==r.date||!Number.isFinite(r.index)||r.index<0)throw Error('Relevé invalide');
+ }
+ readings.sort((a,b)=>a.date.localeCompare(b.date));
+ for(let i=1;i<readings.length;i++)if(readings[i].date===readings[i-1].date||readings[i].index<readings[i-1].index)throw Error('Dates en double ou index décroissants');
+ return {price,readings};
+}
+function load(){try{const raw=localStorage.getItem(KEY);return raw?sanitize(JSON.parse(raw)):fresh()}catch{return fresh()}}
+let data=load();
+function store(){try{localStorage.setItem(KEY,JSON.stringify(data))}catch{alert('Stockage indisponible : exportez une sauvegarde.')}render()}
+function render(){
+ const rs=data.readings,last=rs.at(-1),prev=rs.at(-2);
+ $('lastIndex').textContent=last?nfmt(last.index,3)+' m³':'—';
+ $('lastDate').textContent=last?formatDate(last.date):'Aucun relevé';
+ $('price').value=data.price??'';
+ $('history').replaceChildren();$('empty').hidden=rs.length>0;
+ const periods=[];
+ rs.forEach((r,i)=>{
+  const before=rs[i-1],usage=before?r.index-before.index:null,tr=document.createElement('tr');
+  const cells=[formatDate(r.date),nfmt(r.index,3),usage===null?'—':nfmt(usage,3)+' m³'];
+  for(const value of cells){const td=document.createElement('td');td.textContent=value;tr.append(td)}
+  const td=document.createElement('td'),btn=document.createElement('button');
+  btn.className='danger';btn.textContent='Supprimer';btn.title='Supprimer le relevé du '+formatDate(r.date);
+  btn.onclick=()=>{if(confirm('Supprimer ce relevé ? Les consommations seront recalculées.')){data.readings=data.readings.filter(item=>item.id!==r.id);store()}};
+  td.append(btn);tr.append(td);$('history').append(tr);
+  if(before)periods.push({label:formatDate(r.date),usage});
+ });
+ const delta=prev&&last?last.index-prev.index:null,days=prev&&last?dayDiff(prev.date,last.date):0;
+ $('lastUsage').textContent=delta===null?'—':nfmt(delta,3)+' m³';
+ $('lastPeriod').textContent=days>0?formatDate(prev.date)+' → '+formatDate(last.date)+' ('+days+' j)':'Deux relevés nécessaires';
+ $('daily').textContent=days>0?nfmt(delta*1000/days,1)+' L/j':'—';
+ $('cost').textContent=delta!==null&&data.price!==null?money(delta*data.price):'—';
+ $('chart').replaceChildren();$('chartEmpty').hidden=periods.length>0;
+ const display=periods.slice(-8),max=Math.max(...display.map(p=>p.usage),.001);
+ for(const p of display){
+  const wrap=document.createElement('div');wrap.className='barwrap';
+  const val=document.createElement('span');val.className='barvalue';val.textContent=nfmt(p.usage,1);
+  const bar=document.createElement('div');bar.className='barrect';bar.style.height=Math.max(2,Math.round(p.usage/max*145))+'px';bar.title=p.label+' : '+nfmt(p.usage,3)+' m³';
+  const lab=document.createElement('span');lab.className='barlabel';lab.textContent=p.label.slice(0,5);
+  wrap.append(val,bar,lab);$('chart').append(wrap);
+ }
+}
+$('date').value=new Date().toLocaleDateString('en-CA');
+$('readingForm').addEventListener('submit',e=>{
+ e.preventDefault();const date=$('date').value,index=Number($('index').value),msg=$('message');msg.className='error';
+ if(!date||!Number.isFinite(index)||index<0){msg.textContent='Saisissez un index valide.';return}
+ if(data.readings.some(r=>r.date===date)){msg.textContent='Un relevé existe déjà à cette date.';return}
+ let candidate=[...data.readings,{id:crypto.randomUUID?crypto.randomUUID():String(Date.now())+'-'+Math.random(),date,index}];
+ try{candidate=sanitize({price:data.price,readings:candidate}).readings}catch{msg.textContent='Index incohérent avec les relevés précédents ou suivants.';return}
+ data.readings=candidate;store();msg.className='success';msg.textContent='Relevé enregistré.';$('index').value='';
+});
+$('savePrice').onclick=()=>{
+ const v=$('price').value;
+ if(v!==''&&(!Number.isFinite(Number(v))||Number(v)<0)){alert('Tarif invalide');return}
+ data.price=v===''?null:Number(v);store();alert('Tarif enregistré');
+};
+$('export').onclick=()=>{
+ const blob=new Blob([JSON.stringify({app:'mon-eau',version:1,...data},null,2)],{type:'application/json'});
+ const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='mon-eau-sauvegarde-'+new Date().toISOString().slice(0,10)+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+};
+$('importBtn').onclick=()=>$('importFile').click();
+$('importFile').onchange=async e=>{
+ const file=e.target.files[0];if(!file)return;
+ try{const input=JSON.parse(await file.text()),restored=sanitize(input);
+  if(!confirm('Remplacer toutes les données locales par cette sauvegarde ?'))return;
+  data=restored;store();alert('Sauvegarde importée');
+ }catch(err){alert('Impossible d’importer : '+err.message)}finally{e.target.value=''}
+};
+render();
+</script>
+</body>
+</html>
