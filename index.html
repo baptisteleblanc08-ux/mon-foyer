@@ -367,9 +367,13 @@ function render(){
  const importedAlerts=asArray(b?.alerts).filter(x=>x&&typeof x.title==='string').map(x=>({title:x.title,detail:x.detail||'',level:['bad','warn','good'].includes(x.level)?x.level:'warn'}));
  alerts.push(...importedAlerts);
  const actions=asArray(b?.actions).filter(x=>x&&typeof x.title==='string').sort((a,b)=>String(a.date||'').localeCompare(String(b.date||''))).map(x=>({title:x.title,detail:(x.date?dateDisplay(x.date)+' · ':'')+String(x.detail||''),level:''}));
+ // Suggestions de contrôle, sans inventer de dates d'échéance programmées.
+ if(!water.length||water.at(-1).date<addDays(today,-7))actions.push({title:'Relever le compteur d’eau',detail:water.length?'Dernier index du '+dateDisplay(water.at(-1).date):'Aucun relevé local',level:'warn'});
+ if(!fuel.date||fuel.date<addDays(today,-14))actions.push({title:'Actualiser le niveau de fioul',detail:fuel.date?'Dernier relevé du '+dateDisplay(fuel.date):'Relevé non renseigné',level:'warn'});
+ if(budget.date&&budget.date<addDays(today,-7))actions.push({title:'Actualiser les relevés bancaires',detail:'Dernière donnée utilisée : '+dateDisplay(budget.date),level:'warn'});
  const urgent=alerts.filter(x=>x.level==='bad').length,watch=alerts.filter(x=>x.level==='warn').length;
  metrics.alerts=cleanMetric(String(alerts.length),urgent+' critiques · '+watch+' vigilances','Alertes calculées uniquement depuis les sources présentes',urgent?'bad':watch?'warn':alerts.length?'good':'');
- metrics.tasks=cleanMetric(actions.length?String(actions.length):null,actions.length?'Actions programmées':'Planning non connecté','Données à connecter');
+ metrics.tasks=cleanMetric(actions.length?String(actions.length):null,actions.length?'Actions et contrôles conseillés':'Planning non connecté','Une suggestion de contrôle n’est pas une échéance programmée.');
  // Pas de statut "tout va bien" en l'absence de sources.
  const known=Object.entries(metrics).filter(([k,m])=>!['alerts','tasks'].includes(k)&&m.value!=='—').length;
  const label=$('globalState');label.className='pill';
@@ -388,7 +392,7 @@ function render(){
   if(m.tone)node.querySelector('.number').className='number tone-'+m.tone;else node.querySelector('.number').className='number';
  }
  renderList('alertsList',alerts,'Aucune alerte calculable ou signalée. Cela ne confirme pas l’absence d’anomalies tant que les sources ne sont pas toutes connectées.');
- renderList('actionsList',actions,'Aucune action synchronisée. Les échéances pourront venir de Mon Budget, Mon Jardin et Mon Maison.');
+ renderList('actionsList',actions,'Aucune action synchronisée ni contrôle proposé. Les échéances pourront venir de Mon Budget, Mon Jardin et Mon Maison.');
 }
 function populate(){
  const grid=$('kpiGrid');grid.replaceChildren();
