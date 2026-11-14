@@ -1,235 +1,465 @@
-
-<!DOCTYPE html>
+<!doctype html>
 <html lang="fr">
 <head>
-<meta charset="UTF-8">
+<meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Mon Foyer - Tableau de bord</title>
+<meta name="theme-color" content="#142b49">
+<meta name="robots" content="noindex,nofollow">
+<title>Mon Foyer — Tableau de bord</title>
 <style>
-:root {
-  --fond: #f1f5f9;
-  --texte: #172b4d;
-  --bleu: #2563eb;
-  --bordure: #e2e8f0;
-}
-* { box-sizing: border-box; }
-body {
-  margin: 0;
-  font-family: Arial, sans-serif;
-  background: var(--fond);
-  color: var(--texte);
-}
-header {
-  background: #142b49;
-  color: white;
-  padding: 22px 5%;
-}
-header h1 { margin: 0 0 6px; }
-header p { margin: 0; color: #cbd5e1; }
-main {
-  max-width: 1200px;
-  margin: auto;
-  padding: 28px 20px;
-}
-h2 { margin: 30px 0 16px; }
-.grille {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
-}
-.carte {
-  background: white;
-  border: 1px solid var(--bordure);
-  border-radius: 14px;
-  padding: 22px;
-  box-shadow: 0 2px 8px #00000008;
-}
-.carte h3 { margin: 0 0 14px; }
-.valeur {
-  font-size: 17px;
-  font-weight: bold;
-}
-.muet { color: #64748b; }
-.panneau { margin-top: 16px; }
-.applications {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
-}
-.application {
-  display: block;
-  text-decoration: none;
-  color: inherit;
-  transition: transform .2s;
-}
-.application:hover { transform: translateY(-3px); }
-.icone { font-size: 30px; }
-.application p { color: #64748b; }
-.etat {
-  display: inline-block;
-  padding: 6px 10px;
-  border-radius: 20px;
-  background: #e2e8f0;
-  font-size: 12px;
-}
-footer {
-  text-align: center;
-  padding: 30px;
-  color: #64748b;
-}
-@media(max-width: 850px) {
-  .grille { grid-template-columns: repeat(2, 1fr); }
-  .applications { grid-template-columns: repeat(2, 1fr); }
-}
-@media(max-width: 500px) {
-  .grille, .applications {
-    grid-template-columns: 1fr;
-  }
-}
+:root{--navy:#142b49;--blue:#2563eb;--bg:#f1f5f9;--text:#172b4d;--muted:#64748b;--border:#e2e8f0;--card:#fff;--green:#187349;--orange:#9b620a;--red:#b42318;--pale:#eaf1ff;font-family:system-ui,-apple-system,Segoe UI,Arial,sans-serif;color:var(--text);background:var(--bg)}
+*{box-sizing:border-box}body{margin:0}a{color:inherit}button,input{font:inherit}button{cursor:pointer}button:focus-visible,a:focus-visible,input:focus-visible{outline:3px solid #69a3f7;outline-offset:3px}
+header{background:var(--navy);color:white;padding:19px max(18px,calc((100vw - 1240px)/2));box-shadow:0 3px 18px #142b4926}
+.top{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:13px}.brandmark{display:grid;place-items:center;width:49px;height:49px;border-radius:13px;background:#ffffff1f;font-size:27px}.brand h1{margin:0;font-size:1.65rem}.brand p{margin:4px 0 0;color:#cfdbeb;font-size:.88rem}
+.toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.btn{border:1px solid transparent;border-radius:10px;background:var(--blue);color:white;padding:10px 14px;font-weight:650}.btn:hover{filter:brightness(.96)}.btn.ghost{background:#ffffff1c;border-color:#ffffff36;color:#fff}.btn.light{background:#edf3ff;color:#1c4e9f;border-color:#d8e5ff}.btn.small{padding:8px 11px;font-size:.84rem}
+main{max-width:1280px;margin:auto;padding:26px 20px 46px}.strip{background:#fff;border:1px solid var(--border);border-radius:16px;padding:17px 20px;display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;box-shadow:0 3px 12px #10274408}
+.statewrap{display:flex;gap:13px;align-items:center}.stateicon{height:43px;width:43px;display:grid;place-items:center;background:#e9eff8;color:#264a75;border-radius:12px;font-size:22px}.strip h2{font-size:1rem;margin:0 0 5px}.strip p{font-size:.86rem;color:var(--muted);margin:0;line-height:1.5}.pill{display:inline-flex;align-items:center;gap:5px;padding:6px 10px;border:1px solid #d8e1ed;border-radius:999px;background:#f5f8fc;color:#455d76;font-size:.78rem;font-weight:700}.pill.good{background:#e9f8ee;color:var(--green);border-color:#c7e9d2}.pill.warn{background:#fff7e7;color:var(--orange);border-color:#f0dca9}.pill.bad{background:#fff0ef;color:var(--red);border-color:#f1c7c4}
+.heading{display:flex;align-items:center;justify-content:space-between;gap:15px;flex-wrap:wrap;margin:29px 0 13px}.heading h2{font-size:1.18rem;margin:0}.heading p{margin:0;font-size:.84rem;color:var(--muted)}
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:13px}
+.kpi,.panel,.app{background:var(--card);border:1px solid var(--border);border-radius:15px;box-shadow:0 3px 10px #18365008}
+.kpi{padding:16px;display:block;text-decoration:none;min-height:174px;position:relative;transition:transform .18s,border-color .18s}.kpi:hover,.app:hover{border-color:#9cbaed;transform:translateY(-2px)}.kpi:focus-visible{outline-offset:2px}
+.kpitop{display:flex;align-items:center;gap:8px}.kpiico{width:30px;height:30px;border-radius:9px;background:#ecf3ff;display:grid;place-items:center;font-size:17px}.kpiname{font-size:.84rem;font-weight:700;line-height:1.3;flex:1}.arrow{font-size:1rem;color:#a4b2c8}.number{font-size:clamp(1.36rem,2.15vw,1.91rem);letter-spacing:-.035em;font-weight:780;margin-top:13px;font-variant-numeric:tabular-nums;white-space:nowrap}.kpisub{margin-top:7px;font-size:.8rem;color:#586b83;line-height:1.35;min-height:19px}.kpidetail{border-top:1px solid #ecf0f5;margin-top:12px;padding-top:10px;font-size:.75rem;color:#63768f;line-height:1.4}.tone-good{color:var(--green)!important}.tone-warn{color:var(--orange)!important}.tone-bad{color:var(--red)!important}
+.chartgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px}.panel{padding:20px;min-width:0}.panel h3{font-size:1rem;margin:0}.panel .sub{font-size:.82rem;color:var(--muted);margin:7px 0 15px;line-height:1.45}
+.legend{display:flex;flex-wrap:wrap;gap:14px;margin-top:12px;font-size:.78rem;color:var(--muted)}.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;background:var(--blue)}.legend i.solar{background:#f5ae49}.legend i.actual{background:#1e9a83}.legend i.plan{background:#ef9d53}
+.plot{height:193px;display:flex;align-items:flex-end;gap:8px;border-bottom:1px solid #d9e3ee;padding:6px 5px 0;position:relative}.barcol{flex:1;min-width:0;display:flex;align-items:center;justify-content:flex-end;flex-direction:column;gap:5px;height:100%}.barstack{display:flex;flex-direction:column-reverse;width:70%;max-width:48px;overflow:hidden;border-radius:5px 5px 0 0;background:#dae5f0}.barpiece{width:100%;display:block}.barlabel{font-size:.7rem;color:#62748b;white-space:nowrap}.barval{font-size:.7rem;color:#3d526e;white-space:nowrap}
+.emptyplot{height:193px;border:1px dashed #cad5e5;border-radius:12px;display:grid;place-items:center;text-align:center;padding:22px;color:#6e8096;background:#f9fbfd;font-size:.87rem;line-height:1.6}.emptyplot span{max-width:330px}.graphnote{font-size:.74rem;color:#6a7c91;margin:12px 0 0;line-height:1.5}
+.area svg{width:100%;height:190px;display:block}.area text{fill:#60748a;font-size:11px}.area .gridline{stroke:#e0e9f3;stroke-width:1}
+.activity{display:grid;grid-template-columns:1fr 1fr;gap:15px}.entry{display:flex;align-items:flex-start;gap:10px;padding:11px 0;border-bottom:1px solid #edf1f6;font-size:.88rem;line-height:1.45}.entry:last-child{border-bottom:0}.entry b{display:block;margin-bottom:3px}.entry small{font-size:.78rem;color:var(--muted)}.dot{width:9px;height:9px;border-radius:50%;background:#a6b5c8;margin-top:7px;flex:none}.dot.warn{background:#e6a02a}.dot.bad{background:#dd504a}.dot.good{background:#3fa773}
+.appgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.app{text-decoration:none;padding:18px;display:flex;align-items:center;gap:13px;transition:transform .18s,border-color .18s}.appico{font-size:27px}.app strong{display:block;font-size:.95rem}.app small{display:block;margin-top:4px;color:var(--muted);font-size:.78rem;line-height:1.35}
+footer{text-align:center;color:#74839a;font-size:.78rem;padding:5px 20px 30px}
+dialog{border:1px solid #c6d5e9;border-radius:16px;max-width:min(510px,94vw);width:100%;padding:0;color:var(--text);box-shadow:0 18px 60px #081c3666}dialog::backdrop{background:#101f36aa}.dialogbody{padding:22px}.dialogbody h2{margin:0 0 7px;font-size:1.2rem}.dialogbody p{color:var(--muted);font-size:.83rem;line-height:1.5}.settingsgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:14px 0}.field{display:grid;gap:5px;font-size:.8rem;font-weight:650}.field input{border-radius:8px;border:1px solid #b8cce2;padding:10px 9px;width:100%;min-width:0;color:var(--text)}.dialogactions{display:flex;justify-content:flex-end;gap:9px;flex-wrap:wrap;margin-top:20px}
+.notice{margin-top:13px;padding:12px 14px;background:#edf4fd;border:1px solid #d2e4f8;border-radius:11px;color:#426286;font-size:.82rem;line-height:1.5}.visuallyhidden{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}
+@media(max-width:960px){.kpis{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.compact-label{display:none}
+@media(max-width:720px){header{padding:16px}.toolbar{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));width:100%;gap:6px}.toolbar .btn{white-space:nowrap;font-size:.82rem;padding:9px 3px;min-width:0}.wide-label{display:none}.compact-label{display:inline}main{padding:17px 12px 35px}.kpis{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.chartgrid,.activity{grid-template-columns:1fr}.appgrid{grid-template-columns:repeat(2,minmax(0,1fr))}.panel{padding:16px}.kpi{padding:13px;min-height:168px}.number{font-size:1.45rem}.heading{margin-top:25px}}
+@media(max-width:390px){.kpiname{font-size:.76rem}.number{font-size:1.25rem}.kpiico{width:27px;height:27px}.kpisub{font-size:.72rem}.kpidetail{font-size:.69rem}.app{padding:13px}.appico{font-size:23px}.settingsgrid{grid-template-columns:1fr}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
 </style>
 </head>
 <body>
-
-<header>
-  <h1>Mon Foyer</h1>
-  <p>Tableau de bord et pilotage de la maison</p>
-</header>
-
+<header><div class="top">
+  <div class="brand"><div class="brandmark" aria-hidden="true">⌂</div><div><h1>Mon Foyer</h1><p>Tableau de bord &amp; pilotage de la maison</p></div></div>
+  <div class="toolbar">
+    <button class="btn ghost" id="refreshBtn" type="button">↻ Actualiser</button>
+    <button class="btn ghost" id="importBtn" type="button" aria-label="Importer un instantané"><span class="wide-label">Importer un instantané</span><span class="compact-label">Importer</span></button>
+    <button class="btn ghost" id="settingsBtn" type="button">⚙ Seuils</button>
+    <input type="file" accept=".json,application/json" id="fileImport" class="visuallyhidden" aria-label="Importer un fichier JSON d'indicateurs">
+  </div>
+</div></header>
 <main>
-  <h2>Vue d'ensemble</h2>
-  <section class="grille">
-    <article class="carte">
-      <h3>Énergie</h3>
-      <div class="valeur">À connecter</div>
-      <p class="muet">Consommation et production</p>
-    </article>
-    <article class="carte">
-      <h3>Eau</h3>
-      <div class="valeur" id="eauIndicateur">Aucun relevé local</div>
-      <p class="muet" id="eauPeriode">Consommation entre deux relevés</p>
-    </article>
-    <article class="carte">
-      <h3>Budget</h3>
-      <div class="valeur">Application de test</div>
-      <p class="muet">Données locales · synchronisation privée à venir</p>
-    </article>
-    <article class="carte">
-      <h3>Jardin</h3>
-      <div class="valeur">À connecter</div>
-      <p class="muet">Cultures et récoltes</p>
-    </article>
+  <section class="strip" aria-label="Synthèse de la situation">
+    <div class="statewrap"><span class="stateicon" aria-hidden="true">▣</span><div><h2>État général du foyer <span class="pill" id="globalState">Données à connecter</span></h2><p id="syncNote" role="status" aria-live="polite">Lecture des sources locales…</p></div></div>
+    <span class="pill" id="todayTag">—</span>
   </section>
 
-  <h2>Alertes et actions</h2>
-  <section class="carte panneau">
-    <h3>Suivi du foyer</h3>
-    <p class="muet">
-      Les modules Budget et Eau fonctionnent avec un stockage local dans ce navigateur. La synchronisation OneDrive et les connexions aux équipements sont à venir.
-    </p>
+  <div class="heading"><h2>Vue d'ensemble</h2><p>12 indicateurs · comparaisons · seuils personnalisés</p></div>
+  <section class="kpis" id="kpiGrid" aria-label="Indicateurs principaux"></section>
+
+  <div class="heading"><h2>Analyses et tendances</h2><p>7 jours glissants et mois en cours</p></div>
+  <section class="chartgrid" aria-label="Graphiques">
+    <article class="panel"><h3>Électricité : réseau / solaire</h3><p class="sub">Consommation journalière sur 7 jours. L'énergie renouvelable utilisée est comptée une seule fois.</p><div id="electricityChart"></div><div class="legend"><span><i></i> Réseau</span><span><i class="solar"></i> Renouvelable consommé</span></div><p class="graphnote" id="electricityNote"></p></article>
+    <article class="panel"><h3>Consommation d'eau</h3><p class="sub">Volumes journaliers : estimation interpolée uniquement lorsque les relevés encadrent la période.</p><div id="waterChart"></div><p class="graphnote" id="waterNote"></p></article>
+    <article class="panel"><h3>Budget : réel et prévisionnel</h3><p class="sub">Une courbe distincte pour les soldes bancaires connus et les projections validées.</p><div id="budgetChart"></div><div class="legend"><span><i class="actual"></i> Réel / rapproché</span><span><i class="plan"></i> Prévisionnel</span></div><p class="graphnote" id="budgetNote"></p></article>
+    <article class="panel"><h3>Coût global du foyer</h3><p class="sub">Répartition du mois par poste, sans intégrer deux fois les transferts ou achats de projets.</p><div id="costChart"></div><p class="graphnote" id="costNote"></p></article>
   </section>
 
-
-  <h2>Mes applications</h2>
-
-  <section class="applications">
-
-    <!-- CUISINE -->
-    <a
-      href="https://green-grass-02443c510.2.azurestaticapps.net/"
-      class="carte application"
-    >
-      <div class="icone">🍽️</div>
-      <h3>Cuisine</h3>
-      <p>Repas, recettes et stocks des congélateurs.</p>
-      <span class="etat">Disponible</span>
-    </a>
-
-    <!-- JARDIN -->
-    <a
-      href="https://jolly-river-0c1eea510.3.azurestaticapps.net/"
-      class="carte application"
-    >
-      <div class="icone">🌱</div>
-      <h3>Jardin</h3>
-      <p>Plan 2D, parcelles, bandes de culture et équipements.</p>
-      <span class="etat">Disponible</span>
-    </a>
-
-    <!-- ÉNERGIE -->
-    <a
-      href="module.html?m=energie"
-      class="carte application"
-    >
-      <div class="icone">⚡</div>
-      <h3>Énergie</h3>
-      <p>Électricité, chauffage et recharge du véhicule.</p>
-      <span class="etat">À développer</span>
-    </a>
-
-    <!-- EAU -->
-    <a
-      href="apps/eau/index.html"
-      class="carte application"
-    >
-      <div class="icone">💧</div>
-      <h3>Eau</h3>
-      <p>Relevés du compteur, consommations, coûts et historique.</p>
-      <span class="etat">Disponible · relevés manuels</span>
-    </a>
-
-    <!-- BUDGET -->
-    <a
-      href="apps/budget/index.html"
-      class="carte application"
-    >
-      <div class="icone">💶</div>
-      <h3>Budget</h3>
-      <p>Comptes, validation des classements et solde prévisionnel.</p>
-      <span class="etat">Version de test · stockage local</span>
-    </a>
-
-    <!-- MAISON -->
-    <a
-      href="module.html?m=maison"
-      class="carte application"
-    >
-      <div class="icone">🏠</div>
-      <h3>Maison</h3>
-      <p>Équipements, entretien et travaux.</p>
-      <span class="etat">À développer</span>
-    </a>
-
+  <div class="heading"><h2>Pilotage opérationnel</h2><p>Priorités et prochaines échéances</p></div>
+  <section class="activity" aria-label="Alertes et actions">
+    <article class="panel"><h3>Alertes prioritaires</h3><div id="alertsList" aria-live="polite"></div></article>
+    <article class="panel"><h3>Actions à venir</h3><div id="actionsList"></div></article>
   </section>
 
+  <div class="heading"><h2>Mes applications</h2><p>Accès direct à chaque domaine</p></div>
+  <nav class="appgrid" aria-label="Applications du foyer">
+    <a class="app" href="https://green-grass-02443c510.2.azurestaticapps.net/"><span class="appico" aria-hidden="true">🍽️</span><span><strong>Cuisine</strong><small>Recettes, stocks, planning des repas</small></span></a>
+    <a class="app" href="https://jolly-river-0c1eea510.3.azurestaticapps.net/"><span class="appico" aria-hidden="true">🌱</span><span><strong>Jardin</strong><small>Bandes, cultures et récoltes</small></span></a>
+    <a class="app" href="module.html?m=energie"><span class="appico" aria-hidden="true">⚡</span><span><strong>Énergie</strong><small>Électricité, chauffage et fioul</small></span></a>
+    <a class="app" href="apps/eau/index.html"><span class="appico" aria-hidden="true">💧</span><span><strong>Eau</strong><small>Relevés et consommations</small></span></a>
+    <a class="app" href="apps/budget/index.html"><span class="appico" aria-hidden="true">💶</span><span><strong>Budget</strong><small>Opérations, soldes, prévisions</small></span></a>
+    <a class="app" href="module.html?m=maison"><span class="appico" aria-hidden="true">🏠</span><span><strong>Maison</strong><small>Équipements, entretiens et travaux</small></span></a>
+  </nav>
+  <p class="notice">Confidentialité : cette page lit les données locales des modules Eau et Budget lorsqu'elles existent dans ce navigateur. Elle ne modifie aucun relevé, aucune opération ni aucune classification. Les chiffres manquants restent indisponibles. Le bouton « Importer » accepte aussi la sauvegarde complète de Mon Budget (Paramètres → Sauvegarde intégrale). Elle est analysée temporairement sur cet appareil, sans restaurer ni modifier les comptes. Les données ne sont pas envoyées à un serveur par cette page.</p>
 </main>
+<footer>Mon Foyer · Accueil V2 · Vue de pilotage</footer>
 
-<footer>
-  Mon Foyer - Portail personnel
-</footer>
-
+<dialog id="settingsDialog" aria-labelledby="settingsTitle"><form id="settingsForm" class="dialogbody" method="dialog">
+ <h2 id="settingsTitle">Seuils &amp; relevé de fioul</h2>
+ <p>Seuls les réglages de cet accueil sont enregistrés sur cet appareil. Aucune donnée de Mon Budget ou Mon Eau n'est modifiée.</p>
+ <div class="settingsgrid">
+  <label class="field">Électricité, vigilance (% hausse)<input type="number" name="electricWarn" min="0" max="500" step="1" required></label>
+  <label class="field">Électricité, critique (% hausse)<input type="number" name="electricBad" min="0" max="500" step="1" required></label>
+  <label class="field">Eau, vigilance (% hausse)<input type="number" name="waterWarn" min="0" max="500" step="1" required></label>
+  <label class="field">Eau, critique (% hausse)<input type="number" name="waterBad" min="0" max="500" step="1" required></label>
+  <label class="field">Fioul, vigilance (jours restants)<input type="number" name="fuelWarn" min="1" max="365" step="1" required></label>
+  <label class="field">Fioul, critique (jours restants)<input type="number" name="fuelBad" min="1" max="365" step="1" required></label>
+  <label class="field">Budget, seuil de sécurité (€)<input type="number" name="budgetSafety" min="0" step=".01" required></label>
+  <label class="field">Fioul, volume mesuré (L)<input type="number" name="fuelLitres" min="0" step="1" placeholder="Laisser vide si inconnu"></label>
+  <label class="field">Fioul, consommation (L / jour)<input type="number" name="fuelDaily" min="0.01" step=".01" placeholder="Vide = calcul depuis relevés"></label>
+  <label class="field">Date du relevé de fioul<input type="date" name="fuelDate"></label>
+ </div>
+ <p>Chaque volume daté est ajouté à l'historique local des relevés fioul. Après deux relevés espacés d'au moins 7 jours, la consommation moyenne peut être estimée automatiquement. Une hausse du niveau (remplissage) suspend ce calcul. Le volume doit être confirmé à partir de la géométrie réelle de la cuve ; l'application ne déduit pas des litres d'une photo.</p>
+ <div class="dialogactions"><button type="button" class="btn light" id="closeSettings">Annuler</button><button type="submit" class="btn">Enregistrer les réglages</button></div>
+</form></dialog>
 <script>
+(function () {
 'use strict';
-(function(){
-  try {
-    const saved=localStorage.getItem('mon-eau-v1');
-    if(!saved)return;
-    const data=JSON.parse(saved);
-    if(!Array.isArray(data.readings)||data.readings.length===0)return;
-    const rows=data.readings.filter(r=>Number.isFinite(Number(r.index)) && /^\d{4}-\d{2}-\d{2}$/.test(String(r.date))).slice().sort((a,b)=>a.date.localeCompare(b.date));
-    if(rows.length===0)return;
-    const fmt=x=>Number(x).toLocaleString('fr-FR',{maximumFractionDigits:3});
-    const d=s=>new Date(s+'T12:00:00').toLocaleDateString('fr-FR');
-    const last=rows[rows.length-1],prev=rows[rows.length-2];
-    const value=document.getElementById('eauIndicateur');
-    const period=document.getElementById('eauPeriode');
-    if(prev&&Number(last.index)>=Number(prev.index)){
-      value.textContent=fmt(Number(last.index)-Number(prev.index))+' m³';
-      period.textContent='Du '+d(prev.date)+' au '+d(last.date);
-    }else{
-      value.textContent=fmt(last.index)+' m³ (index)';
-      period.textContent='Dernier relevé : '+d(last.date);
-    }
-  }catch(e){/* Ne pas remplacer les chiffres par une donnée incertaine. */}
+const $=id=>document.getElementById(id);
+const settingsKey='mon-foyer-dashboard-settings-v2';
+const defaults={electricWarn:5,electricBad:15,waterWarn:5,waterBad:15,fuelWarn:45,fuelBad:20,budgetSafety:0,fuelLitres:null,fuelDaily:null,fuelDate:''};
+const apps={energy:'module.html?m=energie',water:'apps/eau/index.html',budget:'apps/budget/index.html',house:'module.html?m=maison'};
+const defs=[
+ ['elec','Électricité','⚡','energy'],['renew','Part de renouvelable','☀️','energy'],['autonomy','Autonomie électrique','🔋','energy'],['water','Eau','💧','water'],
+ ['budget','Budget actuel','💶','budget'],['forecast','Prévision fin de mois','📅','budget'],['fuel','Fioul restant','⛽','energy'],['days','Autonomie fioul','⌛','energy'],
+ ['cost','Coût global du foyer','🧾','budget'],['savings','Économies réalisées','📉','budget'],['alerts','Alertes prioritaires','🔔','house'],['tasks','Actions à venir','☑','house']
+];
+const money=v=>Number(v).toLocaleString('fr-FR',{style:'currency',currency:'EUR'});
+const num=(v,dec=1)=>Number(v).toLocaleString('fr-FR',{maximumFractionDigits:dec});
+const dateDisplay=s=>s?new Date(s+'T12:00:00').toLocaleDateString('fr-FR'):'—';
+const iso=d=>[d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-');
+const today=iso(new Date());
+const dayTime=d=>Date.parse(d+'T12:00:00Z');
+const addDays=(d,n)=>new Date(dayTime(d)+n*86400000).toISOString().slice(0,10);
+const lastDates=(n,offset=0)=>Array.from({length:n},(_,i)=>addDays(today,-n+1+i+offset));
+const allFinite=arr=>arr.every(Number.isFinite);
+const goodNumber=n=>typeof n==='number' && Number.isFinite(n);
+function parseKey(key){try{const s=localStorage.getItem(key);return s?JSON.parse(s):null}catch{return null}}
+function restoreSettings(){const stored=parseKey(settingsKey);return {...defaults,...(stored&&typeof stored==='object'?stored:{})}}
+let settings=restoreSettings(),inMemoryBridge=null,inMemoryBudget=null;
+const budgetBank=()=>inMemoryBudget?.bank||parseKey('mon-foyer-budget-bank-v06');
+const budgetReference=()=>inMemoryBudget?inMemoryBudget.balanceReference:parseKey('mon-foyer-budget-solde-verifie-v15');
+const budgetLocal=()=>inMemoryBudget?.localBudget||parseKey('mon-foyer-budget-v01');
+function cleanMetric(value,sub='Donnée non disponible',detail='Connexion en attente',tone=''){
+ return {value:value===null||value===undefined?'—':value,sub,detail,tone};
+}
+function metricSet(){return Object.fromEntries(defs.map(d=>[d[0],cleanMetric(null)]))}
+function asArray(x){return Array.isArray(x)?x:[]}
+function bridge(){return inMemoryBridge||(window.MON_FOYER_BRIDGE&&typeof window.MON_FOYER_BRIDGE==='object'?window.MON_FOYER_BRIDGE:{})}
+function dailyPower(){
+ const raw=asArray(bridge()?.electricity?.daily);
+ return raw.filter(x=>x&&/^\d{4}-\d{2}-\d{2}$/.test(x.date)).sort((a,b)=>a.date.localeCompare(b.date));
+}
+function periodPower(dates,rows){
+ const by=new Map(rows.map(r=>[r.date,r]));
+ const matches=dates.map(d=>by.get(d));
+ if(matches.some(r=>!r||!goodNumber(r.consumptionKwh)||r.consumptionKwh<0||!goodNumber(r.renewableUsedKwh)||r.renewableUsedKwh<0||r.renewableUsedKwh>r.consumptionKwh+.001))return null;
+ return {c:matches.reduce((a,b)=>a+b.consumptionKwh,0),r:matches.reduce((a,b)=>a+b.renewableUsedKwh,0),rows:matches};
+}
+function percentChange(now,previous){return previous>0?100*(now-previous)/previous:null}
+function changeText(v){return v===null?'Comparaison non disponible':(v>0?'+':'')+num(v,1)+' % vs période précédente'}
+function statusForIncrease(value,warn,bad){return value===null?'':value>bad?'bad':value>warn?'warn':'good'}
+function readWater(){
+ const local=parseKey('mon-eau-v1');
+ if(!local||!Array.isArray(local.readings))return [];
+ const rows=local.readings.filter(r=>r&&/^\d{4}-\d{2}-\d{2}$/.test(String(r.date))&&String(r.date)<=today&&Number.isFinite(Number(r.index))&&Number(r.index)>=0)
+  .map(r=>({date:r.date,index:Number(r.index)})).sort((a,b)=>a.date.localeCompare(b.date));
+ for(let i=1;i<rows.length;i++)if(rows[i].date===rows[i-1].date||rows[i].index<rows[i-1].index)return [];
+ return rows;
+}
+function waterIndexAt(date,rows){
+ const at=rows.find(r=>r.date===date);
+ if(at)return at.index;
+ let i=rows.findIndex(r=>r.date>date);
+ if(i<=0)return null;
+ const before=rows[i-1],after=rows[i],span=dayTime(after.date)-dayTime(before.date);
+ if(span<=0)return null;
+ return before.index+(after.index-before.index)*(dayTime(date)-dayTime(before.date))/span;
+}
+function readBudget(){
+ const snapshot={value:null,date:null,series:[],source:'',actualDate:null};
+ const bank=budgetBank();
+ const anchor=budgetReference();
+ if(anchor && typeof anchor.accountId==='string' && /^\d{4}-\d{2}-\d{2}$/.test(anchor.date) && Number.isSafeInteger(anchor.amountCents) && bank && Array.isArray(bank.entries)){
+  const entries=bank.entries.filter(e=>e&&e.accountId===anchor.accountId&&/^\d{4}-\d{2}-\d{2}$/.test(e.date)&&Number.isSafeInteger(e.amountCents)&&e.date<=today).sort((a,b)=>a.date.localeCompare(b.date));
+  const onOrAfter=entries.filter(e=>e.date>anchor.date);
+  const earliest=entries.length?entries[0].date:null,latest=entries.length?entries[entries.length-1].date:null;
+  if(earliest && earliest<=anchor.date && latest && latest>=anchor.date){
+   let val=anchor.amountCents;
+   for(const e of onOrAfter)val+=e.amountCents;
+   snapshot.value=val/100;snapshot.date=latest;snapshot.actualDate=latest;snapshot.source='Compte de référence · relevés importés';
+   const agg=new Map();
+   let start=anchor.amountCents;
+   for(const e of onOrAfter){start+=e.amountCents;agg.set(e.date,start/100)}
+   snapshot.series=[{date:anchor.date,value:anchor.amountCents/100},...[...agg].map(([date,value])=>({date,value}))].slice(-40);
+   return snapshot;
+  }
+  if(earliest && latest && anchor.date<=today){
+   snapshot.value=anchor.amountCents/100;snapshot.date=anchor.date;snapshot.actualDate=anchor.date;snapshot.source='Solde de référence uniquement · couverture non vérifiée';
+   snapshot.series=[{date:anchor.date,value:snapshot.value}];
+   return snapshot;
+  }
+ }
+ const local=budgetLocal();
+ if(local&&Array.isArray(local.accounts)&&Array.isArray(local.operations)&&local.operations.length&&local.accounts.every(a=>Number.isSafeInteger(a.openingCents))){
+  const ids=new Set(local.accounts.map(a=>a.id));
+  const valid=local.operations.filter(o=>o&&o.date<=today&&/^\d{4}-\d{2}-\d{2}$/.test(o.date)&&Number.isSafeInteger(o.amountCents)&&ids.has(o.accountId));
+  let cents=local.accounts.reduce((sum,a)=>sum+a.openingCents,0);
+  for(const o of valid){if(o.type==='income')cents+=o.amountCents;else if(o.type==='expense')cents-=o.amountCents}
+  snapshot.value=cents/100;snapshot.date=valid.map(o=>o.date).sort().at(-1)||null;snapshot.actualDate=snapshot.date;snapshot.source='Prototype local · pas un solde bancaire vérifié';
+ }
+ return snapshot;
+}
+function readCachedForecast(){
+ const x=inMemoryBudget?null:parseKey('mon-foyer-budget-projection-v2');
+ const anchor=budgetReference(),bank=budgetBank();
+ if(!x||x.version!==1||!anchor||!bank||!Array.isArray(bank.entries))return null;
+ const monthEnd=new Date(new Date().getFullYear(),new Date().getMonth()+1,0);
+ const end=iso(monthEnd);
+ if(x.monthEnd!==end||!Number.isSafeInteger(x.forecastEndCents)||x.cutoff>=end||x.cutoff>today)return null;
+ if(x.accountId!==anchor.accountId||x.referenceDate!==anchor.date||x.referenceCents!==anchor.amountCents)return null;
+ const active=bank.entries.filter(e=>e&&e.accountId===x.accountId&&e.date<=today);
+ if(active.length!==x.bankCount||active.some(e=>e.date>x.cutoff))return null;
+ return x;
+}
+const budgetCategoryNames={courses:'Courses',logement:'Logement',energie:'Énergie / eau',transport:'Transports',assurances:'Assurances',sante:'Santé',abonnements:'Abonnements',loisirs:'Loisirs',jardin:'Jardin / maison',habillement:'Habillement',autres:'Autres'};
+function readMonthlyCosts(){
+ const bank=budgetBank();if(!bank||!Array.isArray(bank.entries))return null;
+ const month=today.slice(0,7),rows=bank.entries.filter(x=>x&&x.date?.slice(0,7)===month&&x.date<=today&&Number.isSafeInteger(x.amountCents)&&x.amountCents<0);
+ const validated=rows.filter(x=>x.v09Class?.validated===true&&x.v09Class.kind==='Dépense');
+ const pending=rows.filter(x=>x.v09Class?.validated!==true);
+ const cat=new Map(),owners=new Map();
+ for(const e of validated){const name=String(e.v09Class.category||'Autres dépenses');
+  cat.set(name,(cat.get(name)||0)-e.amountCents/100);
+  const owner=String(e.v09Class.owner||'À affecter');owners.set(owner,(owners.get(owner)||0)-e.amountCents/100);
+ }
+ const sorted=x=>[...x].map(([name,value])=>({name,value})).sort((a,b)=>b.value-a.value);
+ return {total:validated.reduce((n,x)=>n-x.amountCents/100,0),categories:sorted(cat),owners:sorted(owners),
+  validCount:validated.length,pendingCount:pending.length,totalCount:rows.length};
+}
+function pendingBudget(){
+ const bank=budgetBank();if(!bank||!Array.isArray(bank.entries))return null;
+ const rows=bank.entries.filter(x=>x&&x.date<=today);
+ return {pending:rows.filter(x=>x.v09Class?.validated!==true).length,total:rows.length};
+}
+const fuelHistoryKey='mon-foyer-fuel-history-v1';
+function fuelHistory(){
+ const arr=parseKey(fuelHistoryKey);
+ if(!Array.isArray(arr))return [];
+ return arr.filter(r=>r&&/^\d{4}-\d{2}-\d{2}$/.test(r.date)&&r.date<=today&&goodNumber(r.litres)&&r.litres>=0)
+  .sort((a,b)=>a.date.localeCompare(b.date)).slice(-80);
+}
+function getFuel(){
+ const b=bridge()?.fuel,logged=fuelHistory(),latest=logged.at(-1);
+ const fromBridge=b&&goodNumber(b.litres)&&b.litres>=0;
+ const recorded=fromBridge?b.litres:latest?latest.litres:goodNumber(settings.fuelLitres)?settings.fuelLitres:null;
+ const date=fromBridge?b.date||'':latest?latest.date:settings.fuelDate||'';
+ const manualDaily=fromBridge&&goodNumber(b.litresPerDay)&&b.litresPerDay>0?b.litresPerDay:goodNumber(settings.fuelDaily)&&settings.fuelDaily>0?settings.fuelDaily:null;
+ let estimatedDaily=null,spanDays=null;
+ if(!fromBridge && logged.length>=2){
+  const before=logged.at(-2),after=logged.at(-1);
+  spanDays=Math.round((dayTime(after.date)-dayTime(before.date))/86400000);
+  if(spanDays>=7&&before.litres>after.litres)estimatedDaily=(before.litres-after.litres)/spanDays;
+ }
+ const daily=manualDaily??estimatedDaily;
+ const age=date&&date<=today?Math.round((dayTime(today)-dayTime(date))/86400000):0;
+ const current=recorded!==null&&daily!==null?Math.max(0,recorded-age*daily):recorded;
+ return {litres:current,recorded,daily,date,age,dailySource:manualDaily!==null?'Saisie ou mesure externe':estimatedDaily!==null?'Calcul sur '+spanDays+' jours':'Non calculable'};
+}
+function numericMetric(v,unit='',dec=1){return v===null||!Number.isFinite(v)?null:num(v,dec)+(unit?' '+unit:'')}
+function emptyChart(element,reason){const p=document.createElement('div');p.className='emptyplot';const s=document.createElement('span');s.textContent=reason;p.append(s);$(element).replaceChildren(p)}
+function barsChart(element,rows,parts){
+ if(!rows.length){emptyChart(element,'Historique non disponible.');return}
+ const max=Math.max(1,...rows.map(r=>parts.reduce((s,p)=>s+Math.max(0,Number(r[p.key])||0),0)));
+ const plot=document.createElement('div');plot.className='plot';
+ for(const r of rows){
+  const col=document.createElement('div');col.className='barcol';
+  const label=document.createElement('span');label.className='barlabel';label.textContent=r.date.slice(8)+'/'+r.date.slice(5,7);
+  const sum=parts.reduce((s,p)=>s+(Number(r[p.key])||0),0);
+  const val=document.createElement('span');val.className='barval';val.textContent=num(sum,1);
+  const stack=document.createElement('div');stack.className='barstack';
+  stack.style.height=Math.max(2,Math.round(sum/max*135))+'px';
+  for(const part of parts){const bit=document.createElement('span');bit.className='barpiece';bit.style.height=(sum>0?100*(Number(r[part.key])||0)/sum:0)+'%';bit.style.background=part.color;stack.append(bit)}
+  col.title=dateDisplay(r.date)+' : '+num(sum,2)+' '+(parts[0].unit||'');
+  col.append(val,stack,label);plot.append(col);
+ }
+ $(element).replaceChildren(plot);
+}
+function simpleLine(element,actual,forecast){
+ const all=[...actual,...forecast].filter(x=>x&&/^\d{4}-\d{2}-\d{2}$/.test(x.date)&&goodNumber(x.value)).sort((a,b)=>a.date.localeCompare(b.date));
+ if(all.length<2){emptyChart(element,'Historique financier et prévisions encore indisponibles.');return}
+ const low=Math.min(...all.map(x=>x.value)),high=Math.max(...all.map(x=>x.value));
+ const range=Math.max(1,high-low),left=40,right=572,top=13,bottom=160,w=right-left;
+ const first=dayTime(all[0].date),last=dayTime(all[all.length-1].date);
+ const point=x=>[left+w*(dayTime(x.date)-first)/Math.max(1,last-first),bottom-(x.value-low)/range*(bottom-top)];
+ const line=arr=>arr.map((x,i)=>{const q=point(x);return (i?'L':'M')+q[0].toFixed(1)+' '+q[1].toFixed(1)}).join(' ');
+ const wrap=document.createElement('div');wrap.className='area';
+ const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('viewBox','0 0 600 190');svg.setAttribute('role','img');svg.setAttribute('aria-label','Évolution des soldes connus et prévisionnels');
+ for(let i=0;i<3;i++){const y=top+i*(bottom-top)/2;const l=document.createElementNS(svg.namespaceURI,'line');l.setAttribute('x1',left);l.setAttribute('x2',right);l.setAttribute('y1',y);l.setAttribute('y2',y);l.setAttribute('class','gridline');svg.append(l)}
+ for(const [series,color,dash] of [[actual,'#1e9a83',''],[forecast,'#ef9d53','7 5']]){
+  if(series.length<2)continue;
+  const p=document.createElementNS(svg.namespaceURI,'path');p.setAttribute('d',line(series));p.setAttribute('fill','none');p.setAttribute('stroke',color);p.setAttribute('stroke-width','3');if(dash)p.setAttribute('stroke-dasharray',dash);svg.append(p);
+ }
+ wrap.append(svg);$(element).replaceChildren(wrap);
+}
+function renderList(id,items,empty){
+ const el=$(id);el.replaceChildren();
+ if(!items.length){const p=document.createElement('p');p.className='sub';p.textContent=empty;el.append(p);return}
+ for(const entry of items.slice(0,6)){
+  const line=document.createElement('div');line.className='entry';
+  const dot=document.createElement('span');dot.className='dot '+(entry.level||'');dot.setAttribute('aria-hidden','true');
+  const content=document.createElement('div');const title=document.createElement('b');title.textContent=String(entry.title||'Sans titre').slice(0,140);
+  const subtitle=document.createElement('small');subtitle.textContent=String(entry.detail||'').slice(0,220);
+  content.append(title,subtitle);line.append(dot,content);el.append(line);
+ }
+}
+function render(){
+ const b=bridge(),metrics=metricSet(),alerts=[],power=dailyPower(),curr=periodPower(lastDates(7),power),prev=periodPower(lastDates(7,-7),power);
+ if(curr){
+  const change=prev?percentChange(curr.c,prev.c):null;
+  const status=statusForIncrease(change,settings.electricWarn,settings.electricBad);
+  metrics.elec=cleanMetric(numericMetric(curr.c,'kWh'),changeText(change),'7 jours glissants · mesuré',status);
+  const production=curr.rows.reduce((s,r)=>s+(goodNumber(r.pvProductionKwh)?r.pvProductionKwh:0),0);
+  const use=curr.rows.reduce((s,r)=>s+(goodNumber(r.pvUsedKwh)?r.pvUsedKwh:0),0);
+  if(curr.rows.every(r=>goodNumber(r.pvProductionKwh)&&goodNumber(r.pvUsedKwh))&&production>0&&use<=production+.001)
+   metrics.renew=cleanMetric(numericMetric(100*use/production,'%',1),num(use,1)+' / '+num(production,1)+' kWh','Autoconsommation de la production PV');
+  if(curr.c>0)metrics.autonomy=cleanMetric(numericMetric(100*curr.r/curr.c,'%',1),num(curr.r,1)+' kWh couverts','Électricité consommée : solaire et batterie PV');
+  const net=curr.rows.map(r=>({date:r.date,renewable:Math.min(r.renewableUsedKwh,r.consumptionKwh),network:Math.max(0,r.consumptionKwh-r.renewableUsedKwh)}));
+  barsChart('electricityChart',net,[{key:'network',color:'#2563eb',unit:'kWh'},{key:'renewable',color:'#f5ae49'}]);
+  $('electricityNote').textContent='Source : instantané électrique fourni au tableau de bord. La journée en cours peut être incomplète.';
+  if(status==='bad'||status==='warn')alerts.push({title:'Consommation électrique en hausse',detail:changeText(change),level:status});
+ }else{emptyChart('electricityChart','Connexion Solplanet / Home Assistant à réaliser. Aucune mesure électrique ne sera inventée.');$('electricityNote').textContent='Données attendues : consommation, solaire consommé et production PV par jour.'}
+ const water=readWater(),lastWater=water.at(-1),waterEnd=lastWater?.date||today,t0=addDays(waterEnd,-7),t1=addDays(waterEnd,-14),end=waterIndexAt(waterEnd,water),start=waterIndexAt(t0,water),prevStart=waterIndexAt(t1,water);
+ if(end!==null&&start!==null&&end>=start){
+  const volume=end-start,older=prevStart===null?null:start-prevStart,change=older===null?null:percentChange(volume,older),status=statusForIncrease(change,settings.waterWarn,settings.waterBad);
+  const exact=water.some(r=>r.date===t0)&&water.some(r=>r.date===waterEnd);
+  metrics.water=cleanMetric(numericMetric(volume,'m³',3),'7 jours jusqu’au '+dateDisplay(waterEnd),exact?'Bornes relevées · répartition journalière interpolée':'Estimation interpolée entre relevés',status);
+  const daily=Array.from({length:7},(_,i)=>{const date=addDays(waterEnd,-7+i);return {date,volume:Math.max(0,waterIndexAt(addDays(date,1),water)-waterIndexAt(date,water))}});
+  barsChart('waterChart',daily,[{key:'volume',color:'#49a7be',unit:'m³'}]);
+  $('waterNote').textContent=(waterEnd===today?'Période terminant aujourd’hui. ':'Dernier relevé : '+dateDisplay(waterEnd)+' (pas la consommation actuelle). ')+(exact?'Volume réel entre deux bornes connues ; détail quotidien estimé.':'Volume interpolé : consommation supposée régulière entre relevés.')+(change===null?' Comparaison précédente indisponible.':' '+changeText(change)+'.');
+  if(status==='bad'||status==='warn')alerts.push({title:'Consommation d’eau en hausse',detail:changeText(change),level:status});
+ }else{
+  emptyChart('waterChart','Relevés insuffisants pour couvrir les 7 jours précédant le dernier index connu. Ouvre Mon Eau pour ajouter un relevé.');
+  $('waterNote').textContent=water.length?'Dernier relevé disponible : '+dateDisplay(water.at(-1).date)+'. Aucun volume glissant exact calculable.':'Aucun relevé d’eau local trouvé dans ce navigateur.';
+ }
+ const budget=readBudget(),pending=pendingBudget();
+ if(pending?.pending>0)alerts.push({title:'Opérations à classer dans Mon Budget',detail:pending.pending+' sur '+pending.total+' sans validation manuelle',level:'warn'});
+ if(budget.value!==null){
+  metrics.budget=cleanMetric(money(budget.value),'Solde connu au '+dateDisplay(budget.date),budget.source+' · compte de référence uniquement si un solde bancaire daté existe',budget.value<settings.budgetSafety?'warn':'');
+  if(budget.date!==today)metrics.budget.detail+=' · pas une valeur en temps réel';
+  if(budget.value<settings.budgetSafety)alerts.push({title:'Solde connu sous le seuil de sécurité',detail:money(budget.value)+' · seuil : '+money(settings.budgetSafety),level:'warn'});
+ }
+ const cached=readCachedForecast(),importedForecast=inMemoryBudget?null:b?.budget?.forecastEndEUR;
+ const forecast=goodNumber(importedForecast)?importedForecast:cached?cached.forecastEndCents/100:null;
+ if(goodNumber(forecast)){
+  const detail=goodNumber(importedForecast)?b.budget?.forecastNote||'Prévision fournie par Mon Budget':'Projection calculée par Mon Budget, publiée le '+dateDisplay(cached.createdAt.slice(0,10))+' · affectation des échéances à vérifier';
+  metrics.forecast=cleanMetric(money(forecast),'Prévision au dernier jour du mois',detail,forecast<0?'bad':forecast<settings.budgetSafety?'warn':'good');
+  if(forecast<settings.budgetSafety)alerts.push({title:'Budget fin de mois à surveiller',detail:'Projection indicative : '+money(forecast),level:forecast<0?'bad':'warn'});
+ }
+ const fact=asArray(b?.budget?.actualSeries).filter(x=>x&&goodNumber(x.value)).map(x=>({date:x.date,value:x.value}));
+ const plan=asArray(b?.budget?.forecastSeries).filter(x=>x&&goodNumber(x.value)).map(x=>({date:x.date,value:x.value}));
+ const actual=fact.length?fact:budget.series;
+ if(!plan.length&&cached&&budget.date===cached.cutoff&&budget.value!==null)plan.push({date:cached.cutoff,value:budget.value},{date:cached.monthEnd,value:cached.forecastEndCents/100});
+ simpleLine('budgetChart',actual,plan);
+ $('budgetNote').textContent=plan.length?'Projection de Mon Budget distincte des opérations bancaires ; certaines échéances peuvent être multi-comptes.':'Ouvre « Mon Budget → Prévision future » et calcule le solde couvrant la fin du mois pour publier la synthèse.';
+ const fuel=getFuel();
+ if(fuel.litres!==null){
+  const estimated=fuel.daily!==null&&fuel.age>0;
+  metrics.fuel=cleanMetric(numericMetric(fuel.litres,'L',0),
+    estimated?'Estimation au '+dateDisplay(today):'Relevé du '+dateDisplay(fuel.date),
+    (estimated?'Dernier volume saisi : '+num(fuel.recorded,0)+' L le '+dateDisplay(fuel.date)+' · ':'')+
+    (fuel.age>14?'Relevé ancien, vérifier le niveau.':'Volume déclaré, à confirmer selon la géométrie de la cuve.'));
+  if(fuel.daily!==null){
+   const days=fuel.litres/fuel.daily,s=days<=settings.fuelBad?'bad':days<=settings.fuelWarn?'warn':'good';
+   metrics.days=cleanMetric(numericMetric(days,'jours',0),num(fuel.daily,2)+' L/j',
+    'Hypothèse : '+fuel.dailySource+'. Projection sensible au chauffage et à la météo.',s);
+   if(s==='warn'||s==='bad')alerts.push({title:'Réserve de fioul à surveiller',detail:'Autonomie indicative : '+num(days,0)+' jours',level:s});
+  }
+ }
+ const bankCosts=readMonthlyCosts(),cost=!inMemoryBudget&&goodNumber(b?.costs?.totalMonthEUR)?b.costs:bankCosts?.validCount?{totalMonthEUR:bankCosts.total,categories:bankCosts.categories}:null;
+ if(cost&&goodNumber(cost.totalMonthEUR)){
+  metrics.cost=cleanMetric(money(cost.totalMonthEUR),bankCosts&&(inMemoryBudget||!b?.costs)?'Dépenses validées à date':'Dépenses du mois',bankCosts&&(inMemoryBudget||!b?.costs)?bankCosts.validCount+' dépenses validées / '+bankCosts.totalCount+' débits · total partiel':goodNumber(cost.targetEUR)?'Budget cible : '+money(cost.targetEUR):'Postes consolidés par le module Budget');
+  if(goodNumber(cost.targetEUR)&&cost.targetEUR>0&&cost.totalMonthEUR>cost.targetEUR*1.05)alerts.push({title:'Coût du foyer supérieur au budget',detail:money(cost.totalMonthEUR)+' / '+money(cost.targetEUR),level:cost.totalMonthEUR>cost.targetEUR*1.1?'bad':'warn'});
+ }
+ const cats=asArray(cost?.categories).filter(x=>x&&typeof x.name==='string'&&goodNumber(x.value)&&x.value>=0);
+ if(cats.length){
+  const max=Math.max(...cats.map(x=>x.value),1),wrap=document.createElement('div');wrap.style.cssText='display:grid;gap:12px;padding-top:8px';
+  for(const c of cats.slice(0,7)){const l=document.createElement('div');l.style.cssText='display:grid;grid-template-columns:100px 1fr 90px;gap:9px;align-items:center;font-size:.8rem';const name=document.createElement('span');name.textContent=c.name;const track=document.createElement('div');track.style.cssText='height:12px;background:#eaf0f7;border-radius:20px;overflow:hidden';const fill=document.createElement('div');fill.style.cssText='height:100%;width:'+Math.min(100,100*c.value/max)+'%;background:#618fe3;border-radius:20px';const val=document.createElement('strong');val.textContent=money(c.value);track.append(fill);l.append(name,track,val);wrap.append(l)}$('costChart').replaceChildren(wrap);
+  $('costNote').textContent=bankCosts&&(inMemoryBudget||!b?.costs)?'Catégories validées à quatre niveaux uniquement · opérations en attente et transferts exclus. Total partiel.':'Catégories fournies par Mon Budget ; transferts internes à exclure en amont.';
+ }else{emptyChart('costChart','Catégories de dépenses non encore consolidées par Mon Budget.');$('costNote').textContent='Le total doit exclure les virements et les dépenses comptées deux fois.'}
+ if(goodNumber(b?.savings?.totalMonthEUR))metrics.savings=cleanMetric(money(b.savings.totalMonthEUR),'Économies estimées du mois','Solaire, jardin et consommations · sans double comptage');
+ const importedAlerts=asArray(b?.alerts).filter(x=>x&&typeof x.title==='string').map(x=>({title:x.title,detail:x.detail||'',level:['bad','warn','good'].includes(x.level)?x.level:'warn'}));
+ alerts.push(...importedAlerts);
+ const actions=asArray(b?.actions).filter(x=>x&&typeof x.title==='string').sort((a,b)=>String(a.date||'').localeCompare(String(b.date||''))).map(x=>({title:x.title,detail:(x.date?dateDisplay(x.date)+' · ':'')+String(x.detail||''),level:''}));
+ if(pending?.pending>0)actions.push({title:'Classer les opérations bancaires',detail:pending.pending+' opération(s) à valider dans Mon Budget',level:'warn'});
+ // Suggestions de contrôle, sans inventer de dates d'échéance programmées.
+ if(!water.length||water.at(-1).date<addDays(today,-7))actions.push({title:'Relever le compteur d’eau',detail:water.length?'Dernier index du '+dateDisplay(water.at(-1).date):'Aucun relevé local',level:'warn'});
+ if(!fuel.date||fuel.date<addDays(today,-14))actions.push({title:'Actualiser le niveau de fioul',detail:fuel.date?'Dernier relevé du '+dateDisplay(fuel.date):'Relevé non renseigné',level:'warn'});
+ if(budget.date&&budget.date<addDays(today,-7))actions.push({title:'Actualiser les relevés bancaires',detail:'Dernière donnée utilisée : '+dateDisplay(budget.date),level:'warn'});
+ const urgent=alerts.filter(x=>x.level==='bad').length,watch=alerts.filter(x=>x.level==='warn').length;
+ metrics.alerts=cleanMetric(String(alerts.length),urgent+' critiques · '+watch+' vigilances','Alertes calculées uniquement depuis les sources présentes',urgent?'bad':watch?'warn':alerts.length?'good':'');
+ metrics.tasks=cleanMetric(actions.length?String(actions.length):null,actions.length?'Actions et contrôles conseillés':'Planning non connecté','Une suggestion de contrôle n’est pas une échéance programmée.');
+ // Pas de statut "tout va bien" en l'absence de sources.
+ const known=Object.entries(metrics).filter(([k,m])=>!['alerts','tasks'].includes(k)&&m.value!=='—').length;
+ const label=$('globalState');label.className='pill';
+ if(urgent){label.textContent=urgent+' alerte(s) critique(s)';label.classList.add('bad')}
+ else if(watch){label.textContent=watch+' point(s) de vigilance';label.classList.add('warn')}
+ else if(known>=8){label.textContent='Aucune alerte détectée';label.classList.add('good')}
+ else label.textContent='Données partielles · '+known+'/10 indicateurs';
+ $('syncNote').textContent='Sources consultées : données locales + intégrations disponibles · actualisé le '+new Date().toLocaleString('fr-FR');
+ $('todayTag').textContent=new Date().toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+ for(const [id,name,icon,app] of defs){
+  const m=metrics[id],node=document.querySelector('[data-kpi="'+id+'"]');
+  node.querySelector('.number').textContent=m.value;
+  node.querySelector('.kpisub').textContent=m.sub;
+  const detail=node.querySelector('.kpidetail');detail.textContent=m.detail;
+  node.classList.remove('tone-good','tone-warn','tone-bad');
+  if(m.tone)node.querySelector('.number').className='number tone-'+m.tone;else node.querySelector('.number').className='number';
+ }
+ renderList('alertsList',alerts,'Aucune alerte calculable ou signalée. Cela ne confirme pas l’absence d’anomalies tant que les sources ne sont pas toutes connectées.');
+ renderList('actionsList',actions,'Aucune action synchronisée ni contrôle proposé. Les échéances pourront venir de Mon Budget, Mon Jardin et Mon Maison.');
+}
+function populate(){
+ const grid=$('kpiGrid');grid.replaceChildren();
+ for(const [id,name,icon,app] of defs){
+  const a=document.createElement('a');a.className='kpi';a.href=apps[app];a.dataset.kpi=id;a.setAttribute('aria-label','Ouvrir '+name);
+  a.innerHTML='<div class="kpitop"><span class="kpiico" aria-hidden="true"></span><span class="kpiname"></span><span class="arrow" aria-hidden="true">›</span></div><div class="number">—</div><div class="kpisub"></div><div class="kpidetail"></div>';
+  a.querySelector('.kpiico').textContent=icon;a.querySelector('.kpiname').textContent=name;grid.append(a);
+ }
+}
+function openSettings(){const form=$('settingsForm');for(const k of Object.keys(defaults)){const field=form.elements.namedItem(k);if(field)field.value=settings[k]??''}$('settingsDialog').showModal()}
+$('settingsBtn').addEventListener('click',openSettings);
+$('closeSettings').addEventListener('click',()=>$('settingsDialog').close());
+$('settingsForm').addEventListener('submit',e=>{
+ e.preventDefault();const f=e.currentTarget,raw={};
+ for(const k of Object.keys(defaults)){const v=f.elements.namedItem(k).value;raw[k]=['fuelDate'].includes(k)?v:v===''?null:Number(v)}
+ if(!Object.entries(raw).every(([k,v])=>v===null||k==='fuelDate'||Number.isFinite(v)))return;
+ if(raw.electricBad<raw.electricWarn||raw.waterBad<raw.waterWarn||raw.fuelBad>raw.fuelWarn){alert('Vérifie l’ordre des seuils de vigilance et critique.');return}
+ if(raw.fuelLitres!==null&&(!raw.fuelDate||raw.fuelDate>today)){alert('Un relevé de fioul doit avoir une date valide, non future.');return}
+ settings=raw;try{
+  localStorage.setItem(settingsKey,JSON.stringify(settings));
+  if(raw.fuelLitres!==null&&raw.fuelDate){
+   const previous=fuelHistory().filter(r=>r.date!==raw.fuelDate);
+   previous.push({date:raw.fuelDate,litres:raw.fuelLitres});
+   previous.sort((a,b)=>a.date.localeCompare(b.date));
+   localStorage.setItem(fuelHistoryKey,JSON.stringify(previous.slice(-80)));
+  }
+ }catch{alert('Impossible de mémoriser les réglages dans ce navigateur.')}
+ $('settingsDialog').close();render();
+});
+$('refreshBtn').addEventListener('click',render);
+$('importBtn').addEventListener('click',()=>$('fileImport').click());
+$('fileImport').addEventListener('change',async e=>{
+ const file=e.target.files[0];if(!file)return;
+ try{
+  if(file.size>16*1024*1024)throw Error('Fichier supérieur à 16 Mo.');
+  const parsed=JSON.parse(await file.text());
+  if(!parsed||typeof parsed!=='object'||Array.isArray(parsed))throw Error('Objet JSON attendu.');
+  if(parsed.format==='mon-budget-complet'&&parsed.version===1){
+   if(!parsed.bank||!Array.isArray(parsed.bank.entries)||!parsed.localBudget||!Array.isArray(parsed.localBudget.accounts)||!Array.isArray(parsed.localBudget.operations))throw Error('Sauvegarde Mon Budget incomplète.');
+   if(parsed.bank.entries.length>50000||!parsed.bank.entries.every(r=>r&&typeof r.accountId==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(r.date)&&typeof r.id==='string'&&Number.isSafeInteger(r.amountCents)))throw Error('Opérations bancaires incorrectes.');
+   if(parsed.balanceReference&&(!Number.isSafeInteger(parsed.balanceReference.amountCents)||typeof parsed.balanceReference.accountId!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(parsed.balanceReference.date)))throw Error('Solde de référence invalide.');
+   inMemoryBudget={bank:parsed.bank,localBudget:parsed.localBudget,balanceReference:parsed.balanceReference||null};
+   inMemoryBridge=null;
+   render();$('syncNote').textContent='Sauvegarde Mon Budget analysée dans cet onglet, sans restauration ni enregistrement · '+parsed.bank.entries.length+' opérations.';
+  }else{
+   inMemoryBudget=null;inMemoryBridge=parsed;render();
+   $('syncNote').textContent='Instantané JSON chargé temporairement, sans enregistrement.';
+  }
+ }catch(err){alert('Import impossible : '+err.message)}
+ finally{e.target.value=''}
+});
+window.addEventListener('storage',e=>{if(['mon-eau-v1','mon-foyer-budget-v01','mon-foyer-budget-bank-v06','mon-foyer-budget-solde-verifie-v15','mon-foyer-budget-projection-v2','mon-foyer-fuel-history-v1'].includes(e.key))render()});
+populate();render();
 })();
 </script>
 </body>

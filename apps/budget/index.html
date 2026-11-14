@@ -2941,6 +2941,7 @@ function v17Draw(){
       v17CheckLine('Autres mouvements','Postes non imputables exclus : '+s.diagnostics.skippedUnassigned+'. Les projets sans date de paiement sont exclus.')+
       v17CheckLine('Rapprochement','À chaque nouvel export bancaire, les dates nouvellement constatées remplaceront la simulation correspondante.')+
       v17CheckLine('Fiabilité','Simulation indicative : les échéances peuvent concerner plusieurs comptes. Confirme les postes avant d’utiliser le solde pour une décision financière.');
+    if(typeof window.monFoyerPublishBudgetProjection==='function')window.monFoyerPublishBudgetProjection(s);
  }catch(error){
    v17Result=null;result.hidden=true;empty.hidden=false;chip.className='v17Chip warn';chip.textContent='Données incomplètes';
    empty.innerHTML=`<strong>Projection indisponible.</strong><p>${safeText(error.message)}</p><p>Vérifie les imports dans « Rapprochement bancaire », le solde de référence dans « Évolution du solde » et l’ancien budget dans « Postes importés ».</p>`;
@@ -3185,6 +3186,33 @@ v10DrawReview=function(){
 // Rafraîchissement non destructif de l'affichage : n'affecte ni les soldes,
 // ni les validations, ni le contenu des sauvegardes JSON existantes.
 v09Draw();
+</script>
+
+
+<script id="monFoyerBudgetBridgeV2">
+/* Passerelle unidirectionnelle : publie uniquement une synthèse de projection,
+   jamais les opérations bancaires, classifications ou données importées. */
+(function(){
+  'use strict';
+  const key='mon-foyer-budget-projection-v2';
+  window.monFoyerPublishBudgetProjection=function(s){
+    try{
+      if(!s||!s.cutoff||!s.to||!Array.isArray(s.daily)||!v15Reference)return;
+      const today=new Date(),ym=[today.getFullYear(),String(today.getMonth()+1).padStart(2,'0')].join('-');
+      const monthEnd=new Date(Date.UTC(today.getFullYear(),today.getMonth()+1,0)).toISOString().slice(0,10);
+      // Ne publier que la simulation couvrant vraiment la fin du mois courant.
+      if(s.cutoff>=monthEnd||s.to<monthEnd)return;
+      const final=s.daily.find(d=>d.date===monthEnd);
+      if(!final||!Number.isSafeInteger(final.value))return;
+      const allBank=v06Bank.entries.filter(e=>e.accountId===s.account && e.date<=s.cutoff);
+      const current={version:1,accountId:s.account,cutoff:s.cutoff,monthEnd,forecastEndCents:final.value,
+        bankCount:allBank.length,referenceDate:v15Reference.date,referenceCents:v15Reference.amountCents,
+        createdAt:new Date().toISOString(),
+        note:'Simulation indicative du module Budget. Certaines échéances peuvent concerner plusieurs comptes ; rapprochement à confirmer.'};
+      localStorage.setItem(key,JSON.stringify(current));
+    }catch(e){/* Un échec de la synthèse ne doit jamais bloquer Mon Budget. */}
+  };
+})();
 </script>
 
 </body>
