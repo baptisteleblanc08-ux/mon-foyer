@@ -47,3 +47,13 @@ Les séries électriques complètes sur sept jours déclenchent le calcul des KP
 
 ## Limites
 Les données des modules publiés sur d'autres domaines Azure ne sont pas lisibles directement par `localStorage` depuis Mon Foyer. Elles exigeront un connecteur privé (Home Assistant/API/OneDrive selon le domaine), avec authentification. Le déploiement de cette page ne réalise pas cette synchronisation.
+
+## Étape suivante réalisée : sources locales et prévisions
+- **Eau** : calcule la consommation des sept jours précédant le dernier relevé connu (au lieu d'inventer un index actuel). Si l'intervalle est insuffisamment couvert, la valeur n'est pas calculée. Le résultat porte toujours la date de fin.
+- **Budget actuel** : contrôle le solde de référence et les mouvements bancaires importés; la date et la portée du solde (un compte de référence, non nécessairement tous les comptes) sont indiquées.
+- **Prévision fin de mois** : le bouton de calcul de l'onglet « Prévision future » dans Mon Budget peut publier une synthèse `mon-foyer-budget-projection-v2`. Elle ne contient aucune opération individuelle, expire implicitement dès que le mois ou la référence bancaire change, et est invalidée en cas de nouvelles écritures. Le calcul reste une simulation.
+- **Coût global** : en l'absence de connecteur complet, seules les écritures bancaires du mois explicitement marquées « vérifiée » ou « rapprochée » sont comptabilisées ; l'indicateur précise que ce total est partiel.
+- **Fioul** : les volumes manuellement saisis avec une date sont conservés en local dans `mon-foyer-fuel-history-v1`. Deux niveaux espacés d'au moins sept jours et décroissants permettent d'estimer une moyenne de L/j si la saisie manuelle de consommation est laissée vide. Une hausse du niveau suspend le calcul automatique pour éviter d'interpréter un remplissage comme une consommation.
+- **Actions** : signalements de contrôle conseillés pour les relevés d'eau, de fioul et de banque anciens, sans inventer de dates programmées.
+- Toutes ces données sont **locales à l'origine web** : la branche Azure de prévisualisation a son propre `localStorage` et ne voit pas le navigateur connecté au site principal. Les données des apps Cuisine et Jardin, déployées sur d'autres domaines, restent non connectées.
+- Le code n'ajoute pas de jeton Home Assistant à la page : ce raccordement devra être réalisé par un pont sécurisé, et non par des secrets placés dans un HTML public.
