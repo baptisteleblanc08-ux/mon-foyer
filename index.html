@@ -148,7 +148,7 @@ function statusForIncrease(value,warn,bad){return value===null?'':value>bad?'bad
 function readWater(){
  const local=parseKey('mon-eau-v1');
  if(!local||!Array.isArray(local.readings))return [];
- const rows=local.readings.filter(r=>r&&/^\d{4}-\d{2}-\d{2}$/.test(String(r.date))&&Number.isFinite(Number(r.index))&&Number(r.index)>=0)
+ const rows=local.readings.filter(r=>r&&/^\d{4}-\d{2}-\d{2}$/.test(String(r.date))&&String(r.date)<=today&&Number.isFinite(Number(r.index))&&Number(r.index)>=0)
   .map(r=>({date:r.date,index:Number(r.index)})).sort((a,b)=>a.date.localeCompare(b.date));
  for(let i=1;i<rows.length;i++)if(rows[i].date===rows[i-1].date||rows[i].index<rows[i-1].index)return [];
  return rows;
@@ -195,6 +195,29 @@ function readBudget(){
   snapshot.value=cents/100;snapshot.date=valid.map(o=>o.date).sort().at(-1)||null;snapshot.actualDate=snapshot.date;snapshot.source='Prototype local · pas un solde bancaire vérifié';
  }
  return snapshot;
+}
+function readCachedForecast(){
+ const x=parseKey('mon-foyer-budget-projection-v2');
+ const anchor=parseKey('mon-foyer-budget-solde-verifie-v15'),bank=parseKey('mon-foyer-budget-bank-v06');
+ if(!x||x.version!==1||!anchor||!bank||!Array.isArray(bank.entries))return null;
+ const monthEnd=new Date(new Date().getFullYear(),new Date().getMonth()+1,0);
+ const end=iso(monthEnd);
+ if(x.monthEnd!==end||!Number.isSafeInteger(x.forecastEndCents)||x.cutoff>=end||x.cutoff>today)return null;
+ if(x.accountId!==anchor.accountId||x.referenceDate!==anchor.date||x.referenceCents!==anchor.amountCents)return null;
+ const active=bank.entries.filter(e=>e&&e.accountId===x.accountId&&e.date<=today);
+ if(active.length!==x.bankCount||active.some(e=>e.date>x.cutoff))return null;
+ return x;
+}
+const budgetCategoryNames={courses:'Courses',logement:'Logement',energie:'Énergie / eau',transport:'Transports',assurances:'Assurances',sante:'Santé',abonnements:'Abonnements',loisirs:'Loisirs',jardin:'Jardin / maison',habillement:'Habillement',autres:'Autres'};
+function readMonthlyCosts(){
+ const bank=parseKey('mon-foyer-budget-bank-v06');
+ if(!bank||!Array.isArray(bank.entries))return null;
+ const month=today.slice(0,7),rows=bank.entries.filter(x=>x&&x.date?.slice(0,7)===month&&Number.isSafeInteger(x.amountCents)&&x.amountCents<0);
+ const good=rows.filter(x=>['matched','reviewed'].includes(x.status)&&x.category&&x.category!=='transfert_interne');
+ if(!good.length)return null;
+ const grouped=new Map();
+ for(const e of good){const name=budgetCategoryNames[e.category]||'Autre poste validé';grouped.set(name,(grouped.get(name)||0)-e.amountCents/100)}
+ return {total:good.reduce((sum,x)=>sum-x.amountCents/100,0),categories:[...grouped].map(([name,value])=>({name,value})).sort((a,b)=>b.value-a.value),validCount:good.length,totalCount:rows.length};
 }
 function getFuel(){
  const b=bridge()?.fuel;
@@ -267,17 +290,17 @@ function render(){
   $('electricityNote').textContent='Source : instantané électrique fourni au tableau de bord. La journée en cours peut être incomplète.';
   if(status==='bad'||status==='warn')alerts.push({title:'Consommation électrique en hausse',detail:changeText(change),level:status});
  }else{emptyChart('electricityChart','Connexion Solplanet / Home Assistant à réaliser. Aucune mesure électrique ne sera inventée.');$('electricityNote').textContent='Données attendues : consommation, solaire consommé et production PV par jour.'}
- const water=readWater(),t0=addDays(today,-7),t1=addDays(today,-14),end=waterIndexAt(today,water),start=waterIndexAt(t0,water),prevStart=waterIndexAt(t1,water);
+ const water=readWater(),lastWater=water.at(-1),waterEnd=lastWater?.date||today,t0=addDays(waterEnd,-7),t1=addDays(waterEnd,-14),end=waterIndexAt(waterEnd,water),start=waterIndexAt(t0,water),prevStart=waterIndexAt(t1,water);
  if(end!==null&&start!==null&&end>=start){
   const volume=end-start,older=prevStart===null?null:start-prevStart,change=older===null?null:percentChange(volume,older),status=statusForIncrease(change,settings.waterWarn,settings.waterBad);
-  const exact=water.some(r=>r.date===t0)&&water.some(r=>r.date===today);
-  metrics.water=cleanMetric(numericMetric(volume,'m³',3),changeText(change),exact?'Relevés aux bornes de la période':'Estimation interpolée entre relevés',status);
-  const daily=lastDates(7,-1).map(date=>({date,volume:Math.max(0,waterIndexAt(addDays(date,1),water)-waterIndexAt(date,water))}));
+  const exact=water.some(r=>r.date===t0)&&water.some(r=>r.date===waterEnd);
+  metrics.water=cleanMetric(numericMetric(volume,'m³',3),'7 jours jusqu’au '+dateDisplay(waterEnd),exact?'Bornes relevées · répartition journalière interpolée':'Estimation interpolée entre relevés',status);
+  const daily=Array.from({length:7},(_,i)=>{const date=addDays(waterEnd,-7+i);return {date,volume:Math.max(0,waterIndexAt(addDays(date,1),water)-waterIndexAt(date,water))}});
   barsChart('waterChart',daily,[{key:'volume',color:'#49a7be',unit:'m³'}]);
-  $('waterNote').textContent=exact?'Volumes journaliers interpolés si nécessaire ; contrôle par relevé manuel.':'Estimation : la répartition journalière suppose une consommation uniforme entre relevés.';
+  $('waterNote').textContent=(waterEnd===today?'Période terminant aujourd’hui. ':'Dernier relevé : '+dateDisplay(waterEnd)+' (pas la consommation actuelle). ')+(exact?'Volume réel entre deux bornes connues ; détail quotidien estimé.':'Volume interpolé : consommation supposée régulière entre relevés.')+(change===null?' Comparaison précédente indisponible.':' '+changeText(change)+'.');
   if(status==='bad'||status==='warn')alerts.push({title:'Consommation d’eau en hausse',detail:changeText(change),level:status});
  }else{
-  emptyChart('waterChart','Relevés insuffisants pour couvrir les 7 derniers jours. Ouvre Mon Eau pour ajouter un index.');
+  emptyChart('waterChart','Relevés insuffisants pour couvrir les 7 jours précédant le dernier index connu. Ouvre Mon Eau pour ajouter un relevé.');
   $('waterNote').textContent=water.length?'Dernier relevé disponible : '+dateDisplay(water.at(-1).date)+'. Aucun volume glissant exact calculable.':'Aucun relevé d’eau local trouvé dans ce navigateur.';
  }
  const budget=readBudget();
@@ -286,16 +309,19 @@ function render(){
   if(budget.date!==today)metrics.budget.detail+=' · pas une valeur en temps réel';
   if(budget.value<settings.budgetSafety)alerts.push({title:'Solde connu sous le seuil de sécurité',detail:money(budget.value)+' · seuil : '+money(settings.budgetSafety),level:'warn'});
  }
- const forecast=b?.budget?.forecastEndEUR;
+ const cached=readCachedForecast(),importedForecast=b?.budget?.forecastEndEUR;
+ const forecast=goodNumber(importedForecast)?importedForecast:cached?cached.forecastEndCents/100:null;
  if(goodNumber(forecast)){
-  metrics.forecast=cleanMetric(money(forecast),'Au dernier jour du mois',b.budget?.forecastNote||'Prévision fournie par Mon Budget',forecast<0?'bad':forecast<settings.budgetSafety?'warn':'good');
-  if(forecast<settings.budgetSafety)alerts.push({title:'Budget fin de mois à surveiller',detail:'Projection : '+money(forecast),level:forecast<0?'bad':'warn'});
+  const detail=goodNumber(importedForecast)?b.budget?.forecastNote||'Prévision fournie par Mon Budget':'Projection calculée par Mon Budget, publiée le '+dateDisplay(cached.createdAt.slice(0,10))+' · affectation des échéances à vérifier';
+  metrics.forecast=cleanMetric(money(forecast),'Prévision au dernier jour du mois',detail,forecast<0?'bad':forecast<settings.budgetSafety?'warn':'good');
+  if(forecast<settings.budgetSafety)alerts.push({title:'Budget fin de mois à surveiller',detail:'Projection indicative : '+money(forecast),level:forecast<0?'bad':'warn'});
  }
  const fact=asArray(b?.budget?.actualSeries).filter(x=>x&&goodNumber(x.value)).map(x=>({date:x.date,value:x.value}));
  const plan=asArray(b?.budget?.forecastSeries).filter(x=>x&&goodNumber(x.value)).map(x=>({date:x.date,value:x.value}));
  const actual=fact.length?fact:budget.series;
+ if(!plan.length&&cached&&budget.date===cached.cutoff&&budget.value!==null)plan.push({date:cached.cutoff,value:budget.value},{date:cached.monthEnd,value:cached.forecastEndCents/100});
  simpleLine('budgetChart',actual,plan);
- $('budgetNote').textContent=plan.length?'Prévisions fournies par Mon Budget · ne constituent pas des mouvements bancaires.':'Prévision indisponible tant que Mon Budget ne fournit pas un instantané calculé et validé.';
+ $('budgetNote').textContent=plan.length?'Projection de Mon Budget distincte des opérations bancaires ; certaines échéances peuvent être multi-comptes.':'Ouvre « Mon Budget → Prévision future » et calcule le solde couvrant la fin du mois pour publier la synthèse.';
  const fuel=getFuel();
  if(fuel.litres!==null){
   metrics.fuel=cleanMetric(numericMetric(fuel.litres,'L',0),'Relevé du '+dateDisplay(fuel.date),fuel.date&&fuel.date<addDays(today,-14)?'Relevé ancien, à actualiser':'Volume déclaré ou fourni par le suivi fioul');
@@ -303,16 +329,16 @@ function render(){
    if(s==='warn'||s==='bad')alerts.push({title:'Réserve de fioul à surveiller',detail:'Autonomie indicative : '+num(days,0)+' jours',level:s});
   }
  }
- const cost=b?.costs;
+ const bankCosts=readMonthlyCosts(),cost=goodNumber(b?.costs?.totalMonthEUR)?b.costs:bankCosts?{totalMonthEUR:bankCosts.total,categories:bankCosts.categories}:null;
  if(cost&&goodNumber(cost.totalMonthEUR)){
-  metrics.cost=cleanMetric(money(cost.totalMonthEUR),'Dépenses du mois',goodNumber(cost.targetEUR)?'Budget cible : '+money(cost.targetEUR):'Postes consolidés par le module Budget');
+  metrics.cost=cleanMetric(money(cost.totalMonthEUR),bankCosts&&!b?.costs?'Dépenses vérifiées à date':'Dépenses du mois',bankCosts&&!b?.costs?bankCosts.validCount+' opérations retenues sur '+bankCosts.totalCount+' débits importés · total partiel':goodNumber(cost.targetEUR)?'Budget cible : '+money(cost.targetEUR):'Postes consolidés par le module Budget');
   if(goodNumber(cost.targetEUR)&&cost.targetEUR>0&&cost.totalMonthEUR>cost.targetEUR*1.05)alerts.push({title:'Coût du foyer supérieur au budget',detail:money(cost.totalMonthEUR)+' / '+money(cost.targetEUR),level:cost.totalMonthEUR>cost.targetEUR*1.1?'bad':'warn'});
  }
  const cats=asArray(cost?.categories).filter(x=>x&&typeof x.name==='string'&&goodNumber(x.value)&&x.value>=0);
  if(cats.length){
   const max=Math.max(...cats.map(x=>x.value),1),wrap=document.createElement('div');wrap.style.cssText='display:grid;gap:12px;padding-top:8px';
   for(const c of cats.slice(0,7)){const l=document.createElement('div');l.style.cssText='display:grid;grid-template-columns:100px 1fr 90px;gap:9px;align-items:center;font-size:.8rem';const name=document.createElement('span');name.textContent=c.name;const track=document.createElement('div');track.style.cssText='height:12px;background:#eaf0f7;border-radius:20px;overflow:hidden';const fill=document.createElement('div');fill.style.cssText='height:100%;width:'+Math.min(100,100*c.value/max)+'%;background:#618fe3;border-radius:20px';const val=document.createElement('strong');val.textContent=money(c.value);track.append(fill);l.append(name,track,val);wrap.append(l)}$('costChart').replaceChildren(wrap);
-  $('costNote').textContent='Catégories fournies par Mon Budget ; transferts internes à exclure en amont.';
+  $('costNote').textContent=bankCosts&&!b?.costs?'Postes bancaires validés uniquement, hors transferts classés. Total partiel : pas une dépense complète du mois.':'Catégories fournies par Mon Budget ; transferts internes à exclure en amont.';
  }else{emptyChart('costChart','Catégories de dépenses non encore consolidées par Mon Budget.');$('costNote').textContent='Le total doit exclure les virements et les dépenses comptées deux fois.'}
  if(goodNumber(b?.savings?.totalMonthEUR))metrics.savings=cleanMetric(money(b.savings.totalMonthEUR),'Économies estimées du mois','Solaire, jardin et consommations · sans double comptage');
  const importedAlerts=asArray(b?.alerts).filter(x=>x&&typeof x.title==='string').map(x=>({title:x.title,detail:x.detail||'',level:['bad','warn','good'].includes(x.level)?x.level:'warn'}));
@@ -369,7 +395,7 @@ $('fileImport').addEventListener('change',async e=>{
   inMemoryBridge=parsed;render();$('syncNote').textContent='Instantané JSON chargé en mémoire · non enregistré sur cet appareil.';
  }catch(err){alert('Import impossible : '+err.message)}finally{e.target.value=''}
 });
-window.addEventListener('storage',e=>{if(['mon-eau-v1','mon-foyer-budget-v01','mon-foyer-budget-bank-v06','mon-foyer-budget-solde-verifie-v15'].includes(e.key))render()});
+window.addEventListener('storage',e=>{if(['mon-eau-v1','mon-foyer-budget-v01','mon-foyer-budget-bank-v06','mon-foyer-budget-solde-verifie-v15','mon-foyer-budget-projection-v2'].includes(e.key))render()});
 populate();render();
 })();
 </script>
