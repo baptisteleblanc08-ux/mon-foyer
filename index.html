@@ -271,7 +271,7 @@ function render(){
   const volume=end-start,older=prevStart===null?null:start-prevStart,change=older===null?null:percentChange(volume,older),status=statusForIncrease(change,settings.waterWarn,settings.waterBad);
   const exact=water.some(r=>r.date===t0)&&water.some(r=>r.date===today);
   metrics.water=cleanMetric(numericMetric(volume,'m³',3),changeText(change),exact?'Relevés aux bornes de la période':'Estimation interpolée entre relevés',status);
-  const daily=lastDates(7).map(date=>({date,volume:Math.max(0,waterIndexAt(addDays(date,1),water)-waterIndexAt(date,water))}));
+  const daily=lastDates(7,-1).map(date=>({date,volume:Math.max(0,waterIndexAt(addDays(date,1),water)-waterIndexAt(date,water))}));
   barsChart('waterChart',daily,[{key:'volume',color:'#49a7be',unit:'m³'}]);
   $('waterNote').textContent=exact?'Volumes journaliers interpolés si nécessaire ; contrôle par relevé manuel.':'Estimation : la répartition journalière suppose une consommation uniforme entre relevés.';
   if(status==='bad'||status==='warn')alerts.push({title:'Consommation d’eau en hausse',detail:changeText(change),level:status});
