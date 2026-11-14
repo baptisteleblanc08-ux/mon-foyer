@@ -31,7 +31,8 @@ footer{text-align:center;color:#74839a;font-size:.78rem;padding:5px 20px 30px}
 dialog{border:1px solid #c6d5e9;border-radius:16px;max-width:min(510px,94vw);width:100%;padding:0;color:var(--text);box-shadow:0 18px 60px #081c3666}dialog::backdrop{background:#101f36aa}.dialogbody{padding:22px}.dialogbody h2{margin:0 0 7px;font-size:1.2rem}.dialogbody p{color:var(--muted);font-size:.83rem;line-height:1.5}.settingsgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:14px 0}.field{display:grid;gap:5px;font-size:.8rem;font-weight:650}.field input{border-radius:8px;border:1px solid #b8cce2;padding:10px 9px;width:100%;min-width:0;color:var(--text)}.dialogactions{display:flex;justify-content:flex-end;gap:9px;flex-wrap:wrap;margin-top:20px}
 .notice{margin-top:13px;padding:12px 14px;background:#edf4fd;border:1px solid #d2e4f8;border-radius:11px;color:#426286;font-size:.82rem;line-height:1.5}.visuallyhidden{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}
 @media(max-width:960px){.kpis{grid-template-columns:repeat(3,minmax(0,1fr))}}
-@media(max-width:720px){header{padding:16px}main{padding:17px 12px 35px}.kpis{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.chartgrid,.activity{grid-template-columns:1fr}.appgrid{grid-template-columns:repeat(2,minmax(0,1fr))}.panel{padding:16px}.kpi{padding:13px;min-height:168px}.number{font-size:1.45rem}.heading{margin-top:25px}}
+.compact-label{display:none}
+@media(max-width:720px){header{padding:16px}.toolbar{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));width:100%;gap:6px}.toolbar .btn{white-space:nowrap;font-size:.82rem;padding:9px 3px;min-width:0}.wide-label{display:none}.compact-label{display:inline}main{padding:17px 12px 35px}.kpis{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.chartgrid,.activity{grid-template-columns:1fr}.appgrid{grid-template-columns:repeat(2,minmax(0,1fr))}.panel{padding:16px}.kpi{padding:13px;min-height:168px}.number{font-size:1.45rem}.heading{margin-top:25px}}
 @media(max-width:390px){.kpiname{font-size:.76rem}.number{font-size:1.25rem}.kpiico{width:27px;height:27px}.kpisub{font-size:.72rem}.kpidetail{font-size:.69rem}.app{padding:13px}.appico{font-size:23px}.settingsgrid{grid-template-columns:1fr}}
 @media(prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
 </style>
@@ -41,7 +42,7 @@ dialog{border:1px solid #c6d5e9;border-radius:16px;max-width:min(510px,94vw);wid
   <div class="brand"><div class="brandmark" aria-hidden="true">⌂</div><div><h1>Mon Foyer</h1><p>Tableau de bord &amp; pilotage de la maison</p></div></div>
   <div class="toolbar">
     <button class="btn ghost" id="refreshBtn" type="button">↻ Actualiser</button>
-    <button class="btn ghost" id="importBtn" type="button">Importer un instantané</button>
+    <button class="btn ghost" id="importBtn" type="button" aria-label="Importer un instantané"><span class="wide-label">Importer un instantané</span><span class="compact-label">Importer</span></button>
     <button class="btn ghost" id="settingsBtn" type="button">⚙ Seuils</button>
     <input type="file" accept=".json,application/json" id="fileImport" class="visuallyhidden" aria-label="Importer un fichier JSON d'indicateurs">
   </div>
