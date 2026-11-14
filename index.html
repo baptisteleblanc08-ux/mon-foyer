@@ -79,7 +79,7 @@ dialog{border:1px solid #c6d5e9;border-radius:16px;max-width:min(510px,94vw);wid
     <a class="app" href="apps/budget/index.html"><span class="appico" aria-hidden="true">💶</span><span><strong>Budget</strong><small>Opérations, soldes, prévisions</small></span></a>
     <a class="app" href="module.html?m=maison"><span class="appico" aria-hidden="true">🏠</span><span><strong>Maison</strong><small>Équipements, entretiens et travaux</small></span></a>
   </nav>
-  <p class="notice">Confidentialité : cette page lit les données locales des modules Eau et Budget lorsqu'elles existent dans ce navigateur. Elle ne modifie aucun relevé, aucune opération ni aucune classification. Les chiffres manquants restent indisponibles. Les instantanés JSON importés sont utilisés seulement dans la page ouverte et ne sont pas sauvegardés.</p>
+  <p class="notice">Confidentialité : cette page lit les données locales des modules Eau et Budget lorsqu'elles existent dans ce navigateur. Elle ne modifie aucun relevé, aucune opération ni aucune classification. Les chiffres manquants restent indisponibles. Le bouton « Importer » accepte aussi la sauvegarde complète de Mon Budget (Paramètres → Sauvegarde intégrale). Elle est analysée temporairement sur cet appareil, sans restaurer ni modifier les comptes. Les données ne sont pas envoyées à un serveur par cette page.</p>
 </main>
 <footer>Mon Foyer · Accueil V2 · Vue de pilotage</footer>
 
@@ -440,10 +440,23 @@ $('refreshBtn').addEventListener('click',render);
 $('importBtn').addEventListener('click',()=>$('fileImport').click());
 $('fileImport').addEventListener('change',async e=>{
  const file=e.target.files[0];if(!file)return;
- try{if(file.size>1024*1024)throw Error('Fichier supérieur à 1 Mo.');
-  const parsed=JSON.parse(await file.text());if(!parsed||typeof parsed!=='object'||Array.isArray(parsed))throw Error('Objet JSON attendu.');
-  inMemoryBridge=parsed;render();$('syncNote').textContent='Instantané JSON chargé en mémoire · non enregistré sur cet appareil.';
- }catch(err){alert('Import impossible : '+err.message)}finally{e.target.value=''}
+ try{
+  if(file.size>16*1024*1024)throw Error('Fichier supérieur à 16 Mo.');
+  const parsed=JSON.parse(await file.text());
+  if(!parsed||typeof parsed!=='object'||Array.isArray(parsed))throw Error('Objet JSON attendu.');
+  if(parsed.format==='mon-budget-complet'&&parsed.version===1){
+   if(!parsed.bank||!Array.isArray(parsed.bank.entries)||!parsed.localBudget||!Array.isArray(parsed.localBudget.accounts)||!Array.isArray(parsed.localBudget.operations))throw Error('Sauvegarde Mon Budget incomplète.');
+   if(parsed.bank.entries.length>50000||!parsed.bank.entries.every(r=>r&&typeof r.accountId==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(r.date)&&typeof r.id==='string'&&Number.isSafeInteger(r.amountCents)))throw Error('Opérations bancaires incorrectes.');
+   if(parsed.balanceReference&&(!Number.isSafeInteger(parsed.balanceReference.amountCents)||typeof parsed.balanceReference.accountId!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(parsed.balanceReference.date)))throw Error('Solde de référence invalide.');
+   inMemoryBudget={bank:parsed.bank,localBudget:parsed.localBudget,balanceReference:parsed.balanceReference||null};
+   inMemoryBridge=null;
+   render();$('syncNote').textContent='Sauvegarde Mon Budget analysée dans cet onglet, sans restauration ni enregistrement · '+parsed.bank.entries.length+' opérations.';
+  }else{
+   inMemoryBudget=null;inMemoryBridge=parsed;render();
+   $('syncNote').textContent='Instantané JSON chargé temporairement, sans enregistrement.';
+  }
+ }catch(err){alert('Import impossible : '+err.message)}
+ finally{e.target.value=''}
 });
 window.addEventListener('storage',e=>{if(['mon-eau-v1','mon-foyer-budget-v01','mon-foyer-budget-bank-v06','mon-foyer-budget-solde-verifie-v15','mon-foyer-budget-projection-v2','mon-foyer-fuel-history-v1'].includes(e.key))render()});
 populate();render();
