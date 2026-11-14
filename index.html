@@ -125,7 +125,10 @@ const allFinite=arr=>arr.every(Number.isFinite);
 const goodNumber=n=>typeof n==='number' && Number.isFinite(n);
 function parseKey(key){try{const s=localStorage.getItem(key);return s?JSON.parse(s):null}catch{return null}}
 function restoreSettings(){const stored=parseKey(settingsKey);return {...defaults,...(stored&&typeof stored==='object'?stored:{})}}
-let settings=restoreSettings(),inMemoryBridge=null;
+let settings=restoreSettings(),inMemoryBridge=null,inMemoryBudget=null;
+const budgetBank=()=>inMemoryBudget?.bank||parseKey('mon-foyer-budget-bank-v06');
+const budgetReference=()=>inMemoryBudget?inMemoryBudget.balanceReference:parseKey('mon-foyer-budget-solde-verifie-v15');
+const budgetLocal=()=>inMemoryBudget?.localBudget||parseKey('mon-foyer-budget-v01');
 function cleanMetric(value,sub='Donnée non disponible',detail='Connexion en attente',tone=''){
  return {value:value===null||value===undefined?'—':value,sub,detail,tone};
 }
@@ -164,8 +167,8 @@ function waterIndexAt(date,rows){
 }
 function readBudget(){
  const snapshot={value:null,date:null,series:[],source:'',actualDate:null};
- const bank=parseKey('mon-foyer-budget-bank-v06');
- const anchor=parseKey('mon-foyer-budget-solde-verifie-v15');
+ const bank=budgetBank();
+ const anchor=budgetReference();
  if(anchor && typeof anchor.accountId==='string' && /^\d{4}-\d{2}-\d{2}$/.test(anchor.date) && Number.isSafeInteger(anchor.amountCents) && bank && Array.isArray(bank.entries)){
   const entries=bank.entries.filter(e=>e&&e.accountId===anchor.accountId&&/^\d{4}-\d{2}-\d{2}$/.test(e.date)&&Number.isSafeInteger(e.amountCents)&&e.date<=today).sort((a,b)=>a.date.localeCompare(b.date));
   const onOrAfter=entries.filter(e=>e.date>anchor.date);
@@ -186,7 +189,7 @@ function readBudget(){
    return snapshot;
   }
  }
- const local=parseKey('mon-foyer-budget-v01');
+ const local=budgetLocal();
  if(local&&Array.isArray(local.accounts)&&Array.isArray(local.operations)&&local.operations.length&&local.accounts.every(a=>Number.isSafeInteger(a.openingCents))){
   const ids=new Set(local.accounts.map(a=>a.id));
   const valid=local.operations.filter(o=>o&&o.date<=today&&/^\d{4}-\d{2}-\d{2}$/.test(o.date)&&Number.isSafeInteger(o.amountCents)&&ids.has(o.accountId));
@@ -197,8 +200,8 @@ function readBudget(){
  return snapshot;
 }
 function readCachedForecast(){
- const x=parseKey('mon-foyer-budget-projection-v2');
- const anchor=parseKey('mon-foyer-budget-solde-verifie-v15'),bank=parseKey('mon-foyer-budget-bank-v06');
+ const x=inMemoryBudget?null:parseKey('mon-foyer-budget-projection-v2');
+ const anchor=budgetReference(),bank=budgetBank();
  if(!x||x.version!==1||!anchor||!bank||!Array.isArray(bank.entries))return null;
  const monthEnd=new Date(new Date().getFullYear(),new Date().getMonth()+1,0);
  const end=iso(monthEnd);
@@ -210,14 +213,23 @@ function readCachedForecast(){
 }
 const budgetCategoryNames={courses:'Courses',logement:'Logement',energie:'Énergie / eau',transport:'Transports',assurances:'Assurances',sante:'Santé',abonnements:'Abonnements',loisirs:'Loisirs',jardin:'Jardin / maison',habillement:'Habillement',autres:'Autres'};
 function readMonthlyCosts(){
- const bank=parseKey('mon-foyer-budget-bank-v06');
- if(!bank||!Array.isArray(bank.entries))return null;
- const month=today.slice(0,7),rows=bank.entries.filter(x=>x&&x.date?.slice(0,7)===month&&Number.isSafeInteger(x.amountCents)&&x.amountCents<0);
- const good=rows.filter(x=>['matched','reviewed'].includes(x.status)&&x.category&&x.category!=='transfert_interne');
- if(!good.length)return null;
- const grouped=new Map();
- for(const e of good){const name=budgetCategoryNames[e.category]||'Autre poste validé';grouped.set(name,(grouped.get(name)||0)-e.amountCents/100)}
- return {total:good.reduce((sum,x)=>sum-x.amountCents/100,0),categories:[...grouped].map(([name,value])=>({name,value})).sort((a,b)=>b.value-a.value),validCount:good.length,totalCount:rows.length};
+ const bank=budgetBank();if(!bank||!Array.isArray(bank.entries))return null;
+ const month=today.slice(0,7),rows=bank.entries.filter(x=>x&&x.date?.slice(0,7)===month&&x.date<=today&&Number.isSafeInteger(x.amountCents)&&x.amountCents<0);
+ const validated=rows.filter(x=>x.v09Class?.validated===true&&x.v09Class.kind==='Dépense');
+ const pending=rows.filter(x=>x.v09Class?.validated!==true);
+ const cat=new Map(),owners=new Map();
+ for(const e of validated){const name=String(e.v09Class.category||'Autres dépenses');
+  cat.set(name,(cat.get(name)||0)-e.amountCents/100);
+  const owner=String(e.v09Class.owner||'À affecter');owners.set(owner,(owners.get(owner)||0)-e.amountCents/100);
+ }
+ const sorted=x=>[...x].map(([name,value])=>({name,value})).sort((a,b)=>b.value-a.value);
+ return {total:validated.reduce((n,x)=>n-x.amountCents/100,0),categories:sorted(cat),owners:sorted(owners),
+  validCount:validated.length,pendingCount:pending.length,totalCount:rows.length};
+}
+function pendingBudget(){
+ const bank=budgetBank();if(!bank||!Array.isArray(bank.entries))return null;
+ const rows=bank.entries.filter(x=>x&&x.date<=today);
+ return {pending:rows.filter(x=>x.v09Class?.validated!==true).length,total:rows.length};
 }
 const fuelHistoryKey='mon-foyer-fuel-history-v1';
 function fuelHistory(){
@@ -319,13 +331,14 @@ function render(){
   emptyChart('waterChart','Relevés insuffisants pour couvrir les 7 jours précédant le dernier index connu. Ouvre Mon Eau pour ajouter un relevé.');
   $('waterNote').textContent=water.length?'Dernier relevé disponible : '+dateDisplay(water.at(-1).date)+'. Aucun volume glissant exact calculable.':'Aucun relevé d’eau local trouvé dans ce navigateur.';
  }
- const budget=readBudget();
+ const budget=readBudget(),pending=pendingBudget();
+ if(pending?.pending>0)alerts.push({title:'Opérations à classer dans Mon Budget',detail:pending.pending+' sur '+pending.total+' sans validation manuelle',level:'warn'});
  if(budget.value!==null){
-  metrics.budget=cleanMetric(money(budget.value),'Solde connu au '+dateDisplay(budget.date),budget.source,budget.value<settings.budgetSafety?'warn':'');
+  metrics.budget=cleanMetric(money(budget.value),'Solde connu au '+dateDisplay(budget.date),budget.source+' · compte de référence uniquement si un solde bancaire daté existe',budget.value<settings.budgetSafety?'warn':'');
   if(budget.date!==today)metrics.budget.detail+=' · pas une valeur en temps réel';
   if(budget.value<settings.budgetSafety)alerts.push({title:'Solde connu sous le seuil de sécurité',detail:money(budget.value)+' · seuil : '+money(settings.budgetSafety),level:'warn'});
  }
- const cached=readCachedForecast(),importedForecast=b?.budget?.forecastEndEUR;
+ const cached=readCachedForecast(),importedForecast=inMemoryBudget?null:b?.budget?.forecastEndEUR;
  const forecast=goodNumber(importedForecast)?importedForecast:cached?cached.forecastEndCents/100:null;
  if(goodNumber(forecast)){
   const detail=goodNumber(importedForecast)?b.budget?.forecastNote||'Prévision fournie par Mon Budget':'Projection calculée par Mon Budget, publiée le '+dateDisplay(cached.createdAt.slice(0,10))+' · affectation des échéances à vérifier';
@@ -352,21 +365,22 @@ function render(){
    if(s==='warn'||s==='bad')alerts.push({title:'Réserve de fioul à surveiller',detail:'Autonomie indicative : '+num(days,0)+' jours',level:s});
   }
  }
- const bankCosts=readMonthlyCosts(),cost=goodNumber(b?.costs?.totalMonthEUR)?b.costs:bankCosts?{totalMonthEUR:bankCosts.total,categories:bankCosts.categories}:null;
+ const bankCosts=readMonthlyCosts(),cost=!inMemoryBudget&&goodNumber(b?.costs?.totalMonthEUR)?b.costs:bankCosts?.validCount?{totalMonthEUR:bankCosts.total,categories:bankCosts.categories}:null;
  if(cost&&goodNumber(cost.totalMonthEUR)){
-  metrics.cost=cleanMetric(money(cost.totalMonthEUR),bankCosts&&!b?.costs?'Dépenses vérifiées à date':'Dépenses du mois',bankCosts&&!b?.costs?bankCosts.validCount+' opérations retenues sur '+bankCosts.totalCount+' débits importés · total partiel':goodNumber(cost.targetEUR)?'Budget cible : '+money(cost.targetEUR):'Postes consolidés par le module Budget');
+  metrics.cost=cleanMetric(money(cost.totalMonthEUR),bankCosts&&(inMemoryBudget||!b?.costs)?'Dépenses validées à date':'Dépenses du mois',bankCosts&&(inMemoryBudget||!b?.costs)?bankCosts.validCount+' dépenses validées / '+bankCosts.totalCount+' débits · total partiel':goodNumber(cost.targetEUR)?'Budget cible : '+money(cost.targetEUR):'Postes consolidés par le module Budget');
   if(goodNumber(cost.targetEUR)&&cost.targetEUR>0&&cost.totalMonthEUR>cost.targetEUR*1.05)alerts.push({title:'Coût du foyer supérieur au budget',detail:money(cost.totalMonthEUR)+' / '+money(cost.targetEUR),level:cost.totalMonthEUR>cost.targetEUR*1.1?'bad':'warn'});
  }
  const cats=asArray(cost?.categories).filter(x=>x&&typeof x.name==='string'&&goodNumber(x.value)&&x.value>=0);
  if(cats.length){
   const max=Math.max(...cats.map(x=>x.value),1),wrap=document.createElement('div');wrap.style.cssText='display:grid;gap:12px;padding-top:8px';
   for(const c of cats.slice(0,7)){const l=document.createElement('div');l.style.cssText='display:grid;grid-template-columns:100px 1fr 90px;gap:9px;align-items:center;font-size:.8rem';const name=document.createElement('span');name.textContent=c.name;const track=document.createElement('div');track.style.cssText='height:12px;background:#eaf0f7;border-radius:20px;overflow:hidden';const fill=document.createElement('div');fill.style.cssText='height:100%;width:'+Math.min(100,100*c.value/max)+'%;background:#618fe3;border-radius:20px';const val=document.createElement('strong');val.textContent=money(c.value);track.append(fill);l.append(name,track,val);wrap.append(l)}$('costChart').replaceChildren(wrap);
-  $('costNote').textContent=bankCosts&&!b?.costs?'Postes bancaires validés uniquement, hors transferts classés. Total partiel : pas une dépense complète du mois.':'Catégories fournies par Mon Budget ; transferts internes à exclure en amont.';
+  $('costNote').textContent=bankCosts&&(inMemoryBudget||!b?.costs)?'Catégories validées à quatre niveaux uniquement · opérations en attente et transferts exclus. Total partiel.':'Catégories fournies par Mon Budget ; transferts internes à exclure en amont.';
  }else{emptyChart('costChart','Catégories de dépenses non encore consolidées par Mon Budget.');$('costNote').textContent='Le total doit exclure les virements et les dépenses comptées deux fois.'}
  if(goodNumber(b?.savings?.totalMonthEUR))metrics.savings=cleanMetric(money(b.savings.totalMonthEUR),'Économies estimées du mois','Solaire, jardin et consommations · sans double comptage');
  const importedAlerts=asArray(b?.alerts).filter(x=>x&&typeof x.title==='string').map(x=>({title:x.title,detail:x.detail||'',level:['bad','warn','good'].includes(x.level)?x.level:'warn'}));
  alerts.push(...importedAlerts);
  const actions=asArray(b?.actions).filter(x=>x&&typeof x.title==='string').sort((a,b)=>String(a.date||'').localeCompare(String(b.date||''))).map(x=>({title:x.title,detail:(x.date?dateDisplay(x.date)+' · ':'')+String(x.detail||''),level:''}));
+ if(pending?.pending>0)actions.push({title:'Classer les opérations bancaires',detail:pending.pending+' opération(s) à valider dans Mon Budget',level:'warn'});
  // Suggestions de contrôle, sans inventer de dates d'échéance programmées.
  if(!water.length||water.at(-1).date<addDays(today,-7))actions.push({title:'Relever le compteur d’eau',detail:water.length?'Dernier index du '+dateDisplay(water.at(-1).date):'Aucun relevé local',level:'warn'});
  if(!fuel.date||fuel.date<addDays(today,-14))actions.push({title:'Actualiser le niveau de fioul',detail:fuel.date?'Dernier relevé du '+dateDisplay(fuel.date):'Relevé non renseigné',level:'warn'});
